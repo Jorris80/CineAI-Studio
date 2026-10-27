@@ -1,5 +1,5 @@
 /* CineAI Studio — Service Worker (mode offline PWA) */
-const VERSION = 'cineai-v1.1.0';
+const VERSION = 'cineai-v1.2.1';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 const IMG_CACHE = 'cineai-img-v1';
 const MAX_IMG = 150;

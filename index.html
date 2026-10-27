@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{
+  color-scheme:dark;
   --bg:#0b0a09;--bg2:#13110f;--card:#1a1714;--card2:#221e1a;--line:#2e2924;--line2:#3b342d;
   --tx:#f3eee7;--tx2:#b9afa3;--tx3:#857b70;--acc:#f59e0b;--acc2:#fbbf24;--accTx:#1a1206;
   --ok:#34d399;--warn:#fbbf24;--bad:#f87171;--info:#60a5fa;--vio:#a78bfa;
@@ -22,7 +23,7 @@
   --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
-:root[data-theme="light"]{--bg:#f6f3ee;--bg2:#eee9e1;--card:#fff;--card2:#f7f3ed;--line:#e3dbd0;--line2:#d4c9bb;--tx:#1d1914;--tx2:#5a5148;--tx3:#8a8076;--sh:0 8px 24px rgba(60,40,10,.12)}
+:root[data-theme="light"]{color-scheme:light;--bg:#f6f3ee;--bg2:#eee9e1;--card:#fff;--card2:#f7f3ed;--line:#e3dbd0;--line2:#d4c9bb;--tx:#1d1914;--tx2:#5a5148;--tx3:#8a8076;--sh:0 8px 24px rgba(60,40,10,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:15px;line-height:1.45}
 body{min-height:100vh;overflow-x:hidden}
@@ -158,7 +159,7 @@ hr.s{border:0;border-top:1px solid var(--line);margin:14px 0}
 .p-side small{display:block;font-size:.62rem;color:#fff;text-align:center;margin-top:2px;text-shadow:0 1px 2px #000}
 .p-side svg{width:22px;height:22px}
 .p-bot{position:absolute;left:0;right:0;bottom:0;padding:14px 64px 16px 14px;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff;z-index:3}
-.p-sub{position:absolute;left:8%;right:8%;bottom:26%;text-align:center;z-index:3;pointer-events:none}
+.p-sub{position:absolute;left:6%;right:64px;bottom:26%;text-align:center;z-index:3;pointer-events:none}
 .p-sub span{display:inline;background:rgba(0,0,0,.62);color:#fff;font-weight:700;font-size:1rem;line-height:1.5;padding:2px 8px;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .p-lock{position:absolute;inset:0;z-index:6;background:rgba(10,8,6,.86);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px;text-align:center;color:#fff}
 .p-hook{position:absolute;left:12px;right:12px;bottom:120px;z-index:5;background:rgba(0,0,0,.78);border:1px solid var(--acc);border-radius:14px;padding:14px;color:#fff;animation:pop .35s ease}
@@ -240,6 +241,8 @@ hr.s{border:0;border-top:1px solid var(--line);margin:14px 0}
 .ws-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:12px}.ws-head .ttl{flex:1 1 260px;min-width:0}.ws-head .acts{display:flex;gap:6px;flex-wrap:wrap}
 @media (max-width:640px){.ws-head .acts{width:100%}.ws-head h1{font-size:1.15rem}}
 .player.hasv .p-bot{bottom:58px;background:linear-gradient(transparent,rgba(0,0,0,.6));padding-bottom:6px}.player.hasv .p-side{bottom:170px}
+.legal h3{margin:18px 0 6px;color:var(--acc2)}.legal p,.legal li{font-size:.9rem;color:var(--tx2)}.legal ul{padding-left:20px}.legal table{margin:8px 0}
+@media print{.legal h3{color:#92400e}.legal p,.legal li{color:#222}}
 
 </style>
 </head>
@@ -254,6 +257,7 @@ window.__API_URL = 'https://script.google.com/macros/s/AKfycby1CwaBn91uMZCWcfpsh
 'use strict';
 var BOOT = window.__BOOT || { mode: 'web' };
 var IS_GAS = BOOT.mode === 'gas' && typeof google !== 'undefined' && google.script && google.script.run;
+var IS_DEMO = BOOT.mode === 'demo' && !!window.DemoServer;
 var DEFAULT_API = window.__API_URL || '';
 var LS = {
   get: function (k, d) { try { var v = localStorage.getItem('cine_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -363,11 +367,12 @@ function lightbox(src) {
 /* ---------------- API + offline ---------------- */
 var WRITES = { 'profile.save': 1, 'series.save': 1, 'series.delete': 1, 'episode.save': 1, 'episode.status': 1, 'episode.delete': 1, 'character.save': 1, 'character.delete': 1, 'script.save': 1, 'script.approve': 1,
   'storyboard.update': 1, 'assembly.save': 1, 'qc.signoff': 1, 'comment.add': 1, 'comment.resolve': 1, 'viewer.engage': 1, 'paywall.save': 1, 'hooks.save': 1, 'settings.save': 1, 'budget.save': 1, 'users.save': 1, 'topup.review': 1 };
-var NO_QUEUE = { 'auth.login': 1, 'auth.register': 1, 'media.upload': 1, 'script.aiGenerate': 1, 'script.aiDoctor': 1, 'hooks.generate': 1, 'dub.translate': 1, 'storyboard.generate': 1, 'qc.scan': 1, 'wallet.unlock': 1, 'topup.request': 1, 'license.activate': 1, 'tests.run': 1, 'backup.export': 1 };
+var NO_QUEUE = { 'account.export': 1, 'account.delete': 1, 'auth.login': 1, 'auth.register': 1, 'media.upload': 1, 'script.aiGenerate': 1, 'script.aiDoctor': 1, 'hooks.generate': 1, 'dub.translate': 1, 'storyboard.generate': 1, 'qc.scan': 1, 'wallet.unlock': 1, 'topup.request': 1, 'license.activate': 1, 'tests.run': 1, 'backup.export': 1 };
 function apiUrl() { return LS.get('api', '') || DEFAULT_API; }
 
 function rawCall(req) {
   return new Promise(function (resolve, reject) {
+    if (IS_DEMO) { setTimeout(function () { try { resolve(window.DemoServer.api(JSON.parse(JSON.stringify(req)))); } catch (e) { var er = new Error(e.message); reject(er); } }, 120); return; }
     if (IS_GAS) {
       google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) { var er = new Error(e && e.message || 'Gagal terhubung'); er.network = true; reject(er); }).api(req);
       return;
@@ -489,7 +494,7 @@ function go(h) { if (location.hash === h) route(); else location.hash = h; }
 function curPath() { return (location.hash || '#/').slice(1) || '/'; }
 function route() {
   var p = curPath().split('?')[0];
-  if (!S.user && !/^\/(login|watch|w\/|connect)/.test(p) && p !== '/') { p = '/login'; }
+  if (!S.user && !/^\/(login|watch|w\/|connect|terms|privacy|about)/.test(p) && p !== '/') { p = '/login'; }
   if (p === '/') p = S.user ? (S.user.role === 'VIEWER' ? '/watch' : '/dashboard') : '/watch';
   for (var i = 0; i < ROUTES.length; i++) {
     var m = p.match(ROUTES[i].re);
@@ -542,7 +547,7 @@ function renderShell() {
   var user = S.user ? '<a href="#/profile" class="row nw" style="text-decoration:none;color:inherit;gap:8px">' + avatarHtml(S.user).replace('data-act="zoomImg"', '') + '<span class="hide-m small"><b>' + esc(S.user.name) + '</b><br><span class="dim tiny">' + esc(S.user.role) + '</span></span></a>'
     : '<a class="btn sm pri" href="#/login">Masuk</a>';
   $('#app').innerHTML = '<div id="loader" class="loader hide"><i></i></div><div class="app"><aside class="side">' + brandHtml(b) + '<div class="row mt" style="padding:0 6px">' + lic + (S.boot && S.boot.tier ? '<span class="chip ' + (S.boot.tier === 'FREE' ? 'warn' : 'acc') + '">' + esc(S.boot.tierLabel) + '</span>' : '') + '</div><nav class="nav">' + side + '</nav>' +
-    (S.user ? '<div class="nav"><a href="#" data-act="logout">' + ic('out') + '<span>Keluar</span></a></div>' : '') + (b.poweredBy ? '<div class="tiny dim" style="margin:18px 10px 0">Powered by ' + esc(b.poweredBy) + '</div>' : '') + '</aside>' +
+    (S.user ? '<div class="nav"><a href="#" data-act="logout">' + ic('out') + '<span>Keluar</span></a></div>' : '') + (b.poweredBy ? '<div class="tiny dim" style="margin:18px 10px 0">Powered by ' + esc(b.poweredBy) + '</div>' : '') + legalFooter() + '</aside>' +
     '<div class="main"><header class="top"><span class="only-m">' + brandHtml(b) + '</span><div class="grow"></div><span id="net" class="net">Online</span><button class="btn icon ghost" data-act="theme" aria-label="Tema">' + ic(document.documentElement.dataset.theme === 'light' ? 'moon' : 'sun') + '</button>' + user + '</header>' +
     '<main class="content" id="view"></main></div></div><nav class="bnav">' + mob + '</nav>';
   renderNet();
@@ -624,6 +629,7 @@ function boot() {
   return api('app.boot', {}, { silent: !!cached }).then(function (b) {
     if (!b.user && S.token) { S.token = ''; LS.del('token'); }
     var ch = applyBoot(b);
+    if (b.version && b.version !== CLIENT_VERSION && !S.verWarned) { S.verWarned = 1; toast('Versi server ' + b.version + ' ≠ aplikasi ' + CLIENT_VERSION + '. Muat ulang halaman / deploy versi baru.', 'bad'); }
     // Hanya gambar ulang bila ada yang berubah — hindari render & fetch ganda
     if (!cached || ch.changed) { renderShell(); if (!cached || ch.userChanged) route(); else markNav(curPath().split('?')[0]); }
     setTimeout(prefetch, 600);
@@ -642,6 +648,86 @@ function refreshBadges(n) {
   api('topup.list', { status: 'PENDING' }, { silent: true }).then(function (l) { paint(l.length); }).catch(function () { });
 }
 
+/* ---------------- Tentang aplikasi, Syarat & Ketentuan, Pemberitahuan Privasi ---------------- */
+var CLIENT_VERSION = '1.2.1', CLIENT_BUILD = '2026-10-27';
+var CHANGELOG = [
+  ['1.2.0', '27 Okt 2026', ['Halaman Tentang aplikasi & info versi', 'Syarat & Ketentuan dan Pemberitahuan Privasi (UU PDP)', 'Persetujuan saat mendaftar, unduh data pribadi, hapus akun penonton', 'Versi demo tanpa server']],
+  ['1.1.0', '27 Okt 2026', ['Login & perpindahan menu jauh lebih cepat (cache server + tampilan instan)', 'Perbaikan poster serial, kontrol video, label retensi']],
+  ['1.0.0', '27 Okt 2026', ['Konversi penuh ke Google Apps Script + Google Sheets + PWA', 'AI Gemini, QC 10 pemeriksaan, koin & royalti, mode offline']]
+];
+function legalCtx() {
+  var b = (S.boot && S.boot.branding) || {}, L = (S.boot && S.boot.legal) || {};
+  var brand = L.brand || ((b.title || 'CineAI') + ' ' + (b.highlight || 'Studio')).trim();
+  return {
+    brand: esc(brand), company: esc(L.company || (S.user && S.user.orgName) || 'Penyelenggara layanan ' + brand),
+    email: esc(L.email || '—'), phone: esc(L.phone || '—'), address: esc(L.address || '—'), city: esc(L.city || 'Tasikmalaya'),
+    effective: esc(L.effective || '27 Oktober 2026'), minAge: Number(L.minAge) || 13, version: esc((S.boot && S.boot.legalVersion) || '2026-10-27')
+  };
+}
+function legalPage(title, sub, html) {
+  return '<div style="max-width:820px;margin:0 auto">' + pageHead(title, sub, IS_DEMO ? '' : '<button class="btn sm" onclick="window.print()">' + ic('down') + 'Cetak / PDF</button>') +
+    '<div class="card legal">' + html + '</div><div class="row mt small"><a href="#/terms">Syarat & Ketentuan</a>·<a href="#/privacy">Pemberitahuan Privasi</a>·<a href="#/about">Tentang aplikasi</a></div></div>';
+}
+function termsHtml(c) {
+  return '<p class="small dim">Berlaku sejak ' + c.effective + ' · versi dokumen ' + c.version + '</p>' +
+  '<p>Syarat & Ketentuan ini mengatur penggunaan layanan <b>' + c.brand + '</b> ("Layanan") yang diselenggarakan oleh <b>' + c.company + '</b> ("Kami"). Dengan membuat akun, membeli koin, atau menggunakan Layanan, Anda menyatakan telah membaca dan menyetujui ketentuan ini beserta <a href="#/privacy">Pemberitahuan Privasi</a>.</p>' +
+  '<h3>1. Tentang Layanan</h3><p>Layanan adalah platform produksi dan penayangan drama vertikal berformat 9:16: studio (penulisan naskah, storyboard, audio, QC) bagi tim produksi, dan pemutar episode bagi penonton. Layanan dibangun di atas perangkat lunak CineAI Studio dan berjalan pada infrastruktur Google (Google Apps Script, Google Sheets, Google Drive).</p>' +
+  '<h3>2. Akun</h3><ul><li>Anda wajib memberikan data yang benar dan menjaga kerahasiaan password. Seluruh aktivitas pada akun Anda menjadi tanggung jawab Anda.</li><li>Usia minimal pengguna adalah ' + c.minAge + ' tahun. Pengguna di bawah 18 tahun wajib mendapat izin orang tua/wali, termasuk untuk setiap pembelian koin.</li><li>Satu akun untuk satu orang; akun tidak boleh dipinjamkan, dijual, atau dipakai bersama.</li><li>Akun studio (Admin, Kreator, Reviewer) dibuat oleh admin penyelenggara dan tunduk pada perjanjian kerja/kerja sama masing-masing.</li></ul>' +
+  '<h3>3. Konten & hak kekayaan intelektual</h3><ul><li>Seluruh serial, naskah, gambar, musik, dan video di Layanan dilindungi hak cipta milik Kami atau pemberi lisensi. Penonton hanya memperoleh hak menonton pribadi, non-komersial, di dalam Layanan.</li><li>Dilarang merekam layar, mengunduh, mengunggah ulang, atau mendistribusikan konten—terutama episode berbayar—tanpa izin tertulis.</li><li>Tim studio wajib hanya mengunggah karya orisinal atau berlisensi; tidak memakai wajah/suara orang nyata tanpa persetujuan tertulis; tidak meniru judul, tokoh, atau merek pihak lain; serta tidak memuat pornografi, ujaran kebencian/SARA, kekerasan berlebihan, atau informasi bohong.</li><li>Konten yang dibantu kecerdasan buatan (AI) ditinjau manusia sebelum tayang. Kami dapat menandai konten tersebut sebagai karya yang dibantu AI.</li></ul>' +
+  '<h3>4. Koin, pembelian & pengembalian</h3><ul><li>Koin adalah item digital untuk membuka episode atau season pass di dalam Layanan. Koin bukan uang elektronik, tidak berbunga, tidak dapat diuangkan, dan tidak dapat dipindahkan ke akun lain.</li><li>Harga paket ditampilkan dalam Rupiah sebelum pembayaran. Top-up melalui transfer/QRIS diproses setelah bukti pembayaran diverifikasi admin; koin dikreditkan setelah verifikasi berhasil.</li><li>Koin yang sudah digunakan tidak dapat dikembalikan. Pengembalian dana hanya diberikan bila terjadi kesalahan sistem, pembayaran ganda, atau sebagaimana diwajibkan peraturan perundang-undangan.</li><li>Season pass berlaku untuk seluruh episode serial terkait yang tayang selama serial tersebut tersedia di Layanan.</li><li>Bukti pembayaran palsu mengakibatkan penolakan top-up dan dapat berujung penutupan akun.</li></ul>' +
+  '<h3>5. Penggunaan yang dilarang</h3><ul><li>Mengakses sistem secara tidak sah, mengambil data massal (scraping), atau mengganggu kinerja Layanan.</li><li>Memanipulasi like, penayangan, atau transaksi.</li><li>Menggunakan Layanan untuk tujuan melanggar hukum.</li></ul>' +
+  '<h3>6. Ketersediaan layanan</h3><p>Layanan bergantung pada layanan pihak ketiga (antara lain Google). Kami berupaya menjaga Layanan tetap tersedia, namun tidak menjamin bebas gangguan, kesalahan, atau keterlambatan, termasuk akibat batas kuota penyedia infrastruktur. Fitur mode offline menyimpan sebagian data di perangkat Anda dan menyinkronkannya saat kembali online.</p>' +
+  '<h3>7. Penangguhan & pengakhiran</h3><p>Kami dapat menangguhkan atau menutup akun yang melanggar ketentuan ini. Anda dapat menutup akun penonton kapan saja melalui menu <b>Profil → Hapus akun</b>. Koin yang tersisa pada akun yang ditutup tidak dapat dikembalikan, kecuali diwajibkan hukum.</p>' +
+  '<h3>8. Batasan tanggung jawab</h3><p>Sepanjang diizinkan hukum, tanggung jawab Kami atas kerugian yang timbul dari penggunaan Layanan terbatas pada nilai pembelian koin yang Anda lakukan dalam 3 (tiga) bulan terakhir. Kami tidak bertanggung jawab atas kerugian tidak langsung atau akibat layanan pihak ketiga.</p>' +
+  '<h3>9. Perubahan</h3><p>Kami dapat memperbarui ketentuan ini. Perubahan material diumumkan di dalam Layanan; penggunaan berkelanjutan setelah tanggal berlaku berarti Anda menyetujui perubahan tersebut.</p>' +
+  '<h3>10. Hukum yang berlaku</h3><p>Ketentuan ini tunduk pada hukum Republik Indonesia. Sengketa diselesaikan secara musyawarah; bila tidak tercapai, melalui Pengadilan Negeri ' + c.city + ', tanpa mengurangi hak Anda sebagai konsumen untuk menempuh jalur penyelesaian sengketa konsumen.</p>' +
+  '<h3>11. Kontak</h3><p>' + c.company + '<br>Alamat: ' + c.address + '<br>Email: ' + c.email + ' · WhatsApp: ' + c.phone + '</p>';
+}
+function privacyHtml(c) {
+  return '<p class="small dim">Berlaku sejak ' + c.effective + ' · versi dokumen ' + c.version + '</p>' +
+  '<p>Pemberitahuan ini menjelaskan bagaimana <b>' + c.company + '</b> ("Kami"), selaku pengendali data pribadi untuk layanan <b>' + c.brand + '</b>, memproses data pribadi Anda sesuai Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP).</p>' +
+  '<h3>1. Data yang kami proses</h3><table class="t"><tr><th>Kategori</th><th>Contoh</th><th>Sumber</th></tr>' +
+  '<tr><td>Akun</td><td>Nama, email, nomor WhatsApp (opsional), foto profil, password (disimpan dalam bentuk hash, tidak dapat dibaca)</td><td>Anda</td></tr>' +
+  '<tr><td>Aktivitas menonton</td><td>Episode yang ditonton, persentase tontonan, suka/simpan/bagikan, ID perangkat acak untuk tamu</td><td>Pemutar</td></tr>' +
+  '<tr><td>Transaksi</td><td>Paket koin, nominal, metode, foto bukti transfer, riwayat pembelian episode</td><td>Anda</td></tr>' +
+  '<tr><td>Keamanan</td><td>Waktu login, jenis peramban (user agent), jejak audit tindakan</td><td>Sistem</td></tr>' +
+  '<tr><td>Konten studio (khusus tim)</td><td>Naskah, gambar, audio, video, profil karakter termasuk wajah/suara aktor yang telah memberi persetujuan</td><td>Tim studio</td></tr></table>' +
+  '<p>Kami tidak meminta data kartu pembayaran dan tidak memproses data biometrik penonton.</p>' +
+  '<h3>2. Tujuan & dasar pemrosesan</h3><ul><li><b>Menyediakan layanan</b> (akun, pemutar, koin, riwayat) — pelaksanaan perjanjian dengan Anda.</li><li><b>Verifikasi pembayaran & pencatatan keuangan</b> — perjanjian dan kewajiban hukum.</li><li><b>Keamanan & pencegahan penyalahgunaan</b> (kunci akun, audit) — kepentingan yang sah.</li><li><b>Statistik retensi & peningkatan konten</b> dalam bentuk agregat — kepentingan yang sah.</li><li><b>Notifikasi WhatsApp</b> status top-up — persetujuan Anda dengan mengisi nomor WhatsApp; dapat dicabut dengan menghapus nomor di Profil.</li></ul>' +
+  '<h3>3. Tempat penyimpanan</h3><ul><li>Google Sheets dan Google Drive milik penyelenggara (pusat data Google, dapat berada di luar Indonesia; Google menerapkan standar pelindungan setara).</li><li>Perangkat Anda (penyimpanan lokal browser): token sesi, cache tampilan, antrean offline, dan riwayat “lanjutkan menonton”. Tidak ada cookie iklan atau pelacak pihak ketiga.</li></ul>' +
+  '<h3>4. Pihak yang terlibat</h3><ul><li><b>Google</b> — infrastruktur Apps Script, Sheets, Drive, dan terjemahan otomatis.</li><li><b>Google Gemini API</b> — hanya memproses konten studio (naskah, prompt) saat tim memakai fitur AI; data penonton tidak dikirim.</li><li><b>Fonnte</b> (bila diaktifkan) — pengiriman notifikasi WhatsApp: nomor dan isi pesan.</li><li><b>GitHub Pages</b> (bila dipakai) — hosting tampilan aplikasi, mencatat log akses standar.</li><li><b>Penyedia perangkat lunak CineAI Studio</b> — hanya menerima data teknis lisensi milik penyelenggara (ID proyek, email pemilik); tidak mengakses data penonton.</li></ul><p>Kami <b>tidak menjual</b> data pribadi Anda.</p>' +
+  '<h3>5. Masa simpan</h3><ul><li>Data akun disimpan selama akun aktif.</li><li>Sesi login kedaluwarsa setelah 7 hari; log teknis dibersihkan otomatis dalam 30 hari.</li><li>Data transaksi disimpan sesuai kewajiban pencatatan keuangan dan perpajakan; setelah akun dihapus, data tersebut dianonimkan.</li></ul>' +
+  '<h3>6. Hak Anda</h3><ul><li><b>Mengakses & mendapat salinan</b> data — menu <b>Profil → Unduh data saya</b>.</li><li><b>Memperbaiki</b> data — menu Profil.</li><li><b>Menghapus</b> akun & data — menu <b>Profil → Hapus akun</b> (akun penonton) atau hubungi kami (akun studio).</li><li><b>Menarik persetujuan</b>, <b>menolak</b> pemrosesan tertentu, dan <b>mengajukan keberatan</b> — hubungi kontak di bawah.</li></ul><p>Kami menanggapi permintaan dalam jangka waktu yang ditetapkan UU PDP.</p>' +
+  '<h3>7. Keamanan</h3><p>Koneksi terenkripsi (HTTPS), password ter-hash dengan garam unik, token sesi acak, kunci akun setelah percobaan gagal, pembatasan akses berdasarkan peran, dan jejak audit. Bila terjadi kegagalan pelindungan data, kami akan memberi tahu Anda dan otoritas terkait sesuai ketentuan.</p>' +
+  '<h3>8. Anak</h3><p>Layanan ditujukan untuk pengguna berusia ' + c.minAge + ' tahun ke atas. Data anak di bawah 18 tahun hanya diproses dengan persetujuan orang tua/wali.</p>' +
+  '<h3>9. Perubahan & kontak</h3><p>Perubahan pemberitahuan ini diumumkan di dalam Layanan. Pertanyaan atau permintaan terkait data pribadi:<br><b>' + c.company + '</b><br>Alamat: ' + c.address + '<br>Email: ' + c.email + ' · WhatsApp: ' + c.phone + '</p>';
+}
+on('/terms', function () { view(legalPage('Syarat & Ketentuan', legalCtx().brand, termsHtml(legalCtx()))); });
+on('/privacy', function () { view(legalPage('Pemberitahuan Privasi', legalCtx().brand + ' · UU No. 27/2022', privacyHtml(legalCtx()))); });
+on('/about', function () {
+  var b = S.boot || {}, srv = b.version || '—', mode = IS_DEMO ? 'Demo (data di browser ini)' : IS_GAS ? 'Apps Script (HtmlService)' : 'PWA / GitHub Pages';
+  var sw = ('serviceWorker' in navigator && navigator.serviceWorker.controller) ? 'aktif' : 'tidak aktif';
+  var rows = [['Aplikasi', 'CineAI Studio'], ['Versi aplikasi (tampilan)', CLIENT_VERSION], ['Versi server', srv + (srv !== CLIENT_VERSION && srv !== '—' ? ' ⚠ berbeda — muat ulang / deploy versi baru' : '')], ['Tanggal build', CLIENT_BUILD],
+    ['Mode', mode], ['Lisensi', esc(b.tierLabel || '—')], ['Service worker (offline)', sw], ['Antrean offline', S.outbox.length + ' aksi'], ['Dokumen legal', 'versi ' + esc(b.legalVersion || '—')]];
+  view('<div style="max-width:820px;margin:0 auto">' + pageHead('Tentang aplikasi', legalCtx().brand) +
+    '<div class="card row" style="gap:16px"><span class="logo" style="width:64px;height:64px;border-radius:16px">' + ic('clap') + '</span><div class="grow"><h2 style="margin:0">CineAI Studio <span class="chip acc">v' + CLIENT_VERSION + '</span></h2><div class="small muted">Studio produksi & pemutar drama vertikal 9:16 berbasis Google Apps Script + Google Sheets.</div><div class="tiny dim">Dikembangkan oleh Jorris Ardhian · Tasikmalaya, Indonesia</div></div></div>' +
+    '<div class="card mt pad0"><table class="t">' + rows.map(function (r) { return '<tr><td class="dim" style="width:42%">' + r[0] + '</td><td><b>' + r[1] + '</b></td></tr>'; }).join('') + '</table></div>' +
+    '<div class="row mt"><a class="btn" href="#/terms">' + ic('book') + 'Syarat & Ketentuan</a><a class="btn" href="#/privacy">' + ic('shield') + 'Pemberitahuan Privasi</a><button class="btn" data-act="copyVer">' + ic('list') + 'Salin info versi</button></div>' +
+    '<h3 class="mt2">Apa yang baru</h3>' + CHANGELOG.map(function (c) { return '<div class="card mb"><div class="row between"><b>v' + c[0] + '</b><span class="tiny dim">' + c[1] + '</span></div><ul class="small" style="margin:6px 0 0;padding-left:18px">' + c[2].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>'; }).join('') +
+    '<p class="tiny dim">Perangkat lunak dilisensikan kepada penyelenggara berdasarkan EULA CineAI Studio. Tidak berafiliasi dengan Google maupun platform video mana pun. Nama platform pihak ketiga yang disebut hanya sebagai referensi teknis.</p></div>');
+  S.verText = rows.map(function (r) { return r[0] + ': ' + String(r[1]).replace(/<[^>]+>/g, ''); }).join('\n');
+});
+ACT.copyVer = function () { copy(S.verText || ''); };
+function legalFooter() { return '<div class="tiny dim" style="margin:14px 10px 0;line-height:1.8">v' + CLIENT_VERSION + ' · <a href="#/about">Tentang</a> · <a href="#/terms">S&K</a> · <a href="#/privacy">Privasi</a></div>'; }
+
+/* ----- data pribadi: unduh & hapus akun ----- */
+ACT.myData = function () { run(api('account.export', {})).then(function (d) { dl('data_saya_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(d, null, 2), 'application/json'); toast('Data diunduh', 'ok'); }); };
+ACT.delAccount = function () {
+  modal('Hapus akun', '<div class="col"><div class="note bad">Akun, profil, dan riwayat tonton Anda dihapus. Data transaksi dianonimkan untuk keperluan pembukuan. Koin yang tersisa <b>hangus</b>. Tindakan ini tidak dapat dibatalkan.</div><label class="f">Ketik password untuk konfirmasi<input class="i" type="password" id="delPw"></label></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn bad" data-act="delAccountGo">Hapus akun saya</button>');
+};
+ACT.delAccountGo = function () { run(api('account.delete', { password: val('delPw') }, { noQueue: true }), 'Akun dihapus').then(function () { closeModal(); S.token = ''; S.user = null; MEM = {}; LS.del('token'); LS.del('cache'); LS.del('boot'); LS.del('hist'); boot(); go('#/watch'); }); };
+
 /* ---------------- Login, daftar, koneksi, dasbor, profil ---------------- */
 on('/login', function () {
   if (S.user) return go('#/');
@@ -651,12 +737,15 @@ on('/login', function () {
     '<h1 style="font-size:2rem;margin-top:18px;max-width:520px" class="hide-m">Dari naskah ke layar ponsel — satu studio untuk drama vertikal 9:16.</h1><p class="muted hide-m" style="max-width:520px">Script Studio, storyboard, subtitle, QC & sign-off, pemutar 9:16, koin & royalti. Berjalan di Google Sheets milik Anda, tetap bisa dipakai saat offline.</p></div></div>' +
     '<div class="auth-form"><div class="auth-box"><div class="seg mb"><button class="on" data-act="authTab" data-t="in">Masuk</button>' + (S.boot && S.boot.publicRegistration !== false ? '<button data-act="authTab" data-t="up">Daftar penonton</button>' : '') + '</div>' +
     '<form id="fIn" class="col"><label class="f">Email<input class="i" id="lEmail" type="email" autocomplete="username" required></label><label class="f">Password<input class="i" id="lPass" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Masuk</button></form>' +
-    '<form id="fUp" class="col hide"><label class="f">Nama<input class="i" id="rName" required></label><label class="f">Email<input class="i" id="rEmail" type="email" required></label><label class="f">No. WhatsApp (opsional, untuk notifikasi top-up)<input class="i" id="rPhone" inputmode="tel"></label><label class="f">Password (min 8)<input class="i" id="rPass" type="password" minlength="8" required></label><button class="btn pri" type="submit">Buat akun & mulai menonton</button></form>' +
+    '<form id="fUp" class="col hide"><label class="f">Nama<input class="i" id="rName" required></label><label class="f">Email<input class="i" id="rEmail" type="email" required></label><label class="f">No. WhatsApp (opsional, untuk notifikasi top-up)<input class="i" id="rPhone" inputmode="tel"></label><label class="f">Password (min 8)<input class="i" id="rPass" type="password" minlength="8" required></label><label class="check small"><input type="checkbox" id="rAgree" required><span>Saya berusia minimal 13 tahun (di bawah 18 tahun dengan izin orang tua/wali) dan menyetujui <a href="#/terms" target="_blank">Syarat & Ketentuan</a> serta <a href="#/privacy" target="_blank">Pemberitahuan Privasi</a>.</span></label><button class="btn pri" type="submit">Buat akun & mulai menonton</button></form>' +
     '<div class="row mt center"><a class="btn ghost" href="#/watch">' + ic('play') + 'Tonton sebagai tamu</a>' + (!IS_GAS ? '<a class="btn ghost" href="#/connect">' + ic('wifi') + 'Koneksi</a>' : '') + '</div>' +
-    '<p class="tiny dim mt" style="text-align:center">Akun studio (Admin/Kreator/Reviewer) dibuat oleh admin di menu Pengaturan.</p></div></div></div>';
+    '<p class="tiny dim mt" style="text-align:center">Akun studio (Admin/Kreator/Reviewer) dibuat oleh admin di menu Pengaturan.</p>' +
+    (IS_DEMO ? '<div class="note mt small"><b>Mode demo</b> — masuk cepat sebagai:<div class="row mt" style="gap:6px">' + [['admin@demo.id', 'Admin'], ['kreator@demo.id', 'Kreator'], ['reviewer@demo.id', 'Reviewer'], ['penonton@demo.id', 'Penonton']].map(function (p) { return '<button type="button" class="btn sm" data-act="demoLogin" data-e="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div><div class="tiny dim mt">Password semua akun demo: <b class="mono">demo1234</b></div></div>' : '') +
+    '<p class="tiny dim mt" style="text-align:center">v' + CLIENT_VERSION + ' · <a href="#/about">Tentang</a> · <a href="#/terms">S&K</a> · <a href="#/privacy">Privasi</a></p></div></div></div>';
   $('#fIn').onsubmit = function (e) { e.preventDefault(); run(api('auth.login', { email: val('lEmail'), password: val('lPass'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
-  $('#fUp').onsubmit = function (e) { e.preventDefault(); run(api('auth.register', { name: val('rName'), email: val('rEmail'), phone: val('rPhone'), password: val('rPass'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
+  $('#fUp').onsubmit = function (e) { e.preventDefault(); run(api('auth.register', { name: val('rName'), email: val('rEmail'), phone: val('rPhone'), password: val('rPass'), agree: !!val('rAgree'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
 });
+ACT.demoLogin = function (el) { $('#lEmail').value = el.dataset.e; $('#lPass').value = 'demo1234'; $('#fIn').requestSubmit ? $('#fIn').requestSubmit() : $('#fIn button[type=submit]').click(); };
 ACT.authTab = function (el) { $$('.seg button').forEach(function (b) { b.classList.toggle('on', b === el); }); $('#fIn').classList.toggle('hide', el.dataset.t !== 'in'); $('#fUp').classList.toggle('hide', el.dataset.t !== 'up'); };
 function afterLogin(r) {
   S.token = r.token; S.user = r.user; LS.set('token', r.token); MEM = {}; LS.del('cache');
@@ -705,7 +794,8 @@ on('/profile', function () {
   view(pageHead('Profil saya', esc(u.email) + ' · ' + esc(u.role)) +
     '<div class="grid g2"><div class="card col"><div class="row">' + avatarHtml(u, 'lg') + '<div class="col" style="gap:6px"><button class="btn sm" data-act="avatarUp">' + ic('up') + 'Ganti foto</button>' + (u.avatarUrl ? '<button class="btn sm ghost" data-act="zoomImg" data-src="' + esc(u.avatarUrl) + '">' + ic('zoomin') + 'Perbesar</button>' : '') + '</div></div>' +
     '<label class="f">Nama<input class="i" id="pName" value="' + esc(u.name) + '"></label><label class="f">No. WhatsApp<input class="i" id="pPhone" inputmode="tel" value="' + esc(u.phone) + '"></label><button class="btn pri" data-act="saveProfile">Simpan profil</button></div>' +
-    '<div class="card col"><h3>' + ic('key') + 'Ganti password</h3><label class="f">Password lama<input class="i" type="password" id="pOld"></label><label class="f">Password baru (min 8)<input class="i" type="password" id="pNew"></label><button class="btn" data-act="savePass">Ubah password</button><hr class="s"><button class="btn bad" data-act="logout">' + ic('out') + 'Keluar</button></div></div>');
+    '<div class="card col"><h3>' + ic('key') + 'Ganti password</h3><label class="f">Password lama<input class="i" type="password" id="pOld"></label><label class="f">Password baru (min 8)<input class="i" type="password" id="pNew"></label><button class="btn" data-act="savePass">Ubah password</button><hr class="s"><button class="btn bad" data-act="logout">' + ic('out') + 'Keluar</button></div></div>' +
+    '<div class="card col mt"><h3>' + ic('shield') + 'Data & privasi</h3><p class="small muted" style="margin:0">Hak Anda sesuai UU PDP: mengakses, memperbaiki, dan menghapus data pribadi. Baca <a href="#/privacy">Pemberitahuan Privasi</a> dan <a href="#/terms">Syarat & Ketentuan</a>.</p><div class="row"><button class="btn" data-act="myData">' + ic('down') + 'Unduh data saya</button>' + (u.role === 'VIEWER' ? '<button class="btn bad" data-act="delAccount">' + ic('trash') + 'Hapus akun</button>' : '<span class="tiny dim">Penghapusan akun studio dilakukan oleh admin.</span>') + '<a class="btn ghost" href="#/about">' + ic('list') + 'Tentang aplikasi · v' + CLIENT_VERSION + '</a></div></div>');
 });
 ACT.avatarUp = function () { uploadFlow('image', { max: 512 }).then(function (r) { if (r) return run(api('profile.save', { avatarUrl: r.url }), 'Foto diperbarui').then(function (u) { S.user = u; renderShell(); route(); }); }); };
 ACT.saveProfile = function () { run(api('profile.save', { name: val('pName'), phone: val('pPhone') }), 'Profil disimpan').then(function (u) { if (u && !u.queued) { S.user = u; renderShell(); route(); } }); };
@@ -1206,6 +1296,7 @@ function bindPlayer() {
   var subs = function () { if (!PL.lang) return p.subtitles; var d = p.dubs.filter(function (x) { return x.lang === PL.lang; })[0]; return d ? d.subtitles : p.subtitles; };
   if (v) {
     v.addEventListener('timeupdate', function () {
+      if (!$('#pprog') || $('#vid') !== v) return;
       var t = v.currentTime, dur = v.duration || p.episode.durationSec || 1, pct = Math.min(100, t / dur * 100);
       PL.maxPct = Math.max(PL.maxPct, pct); $('#pprog').style.width = pct + '%';
       var cue = subs().filter(function (s) { return t >= s.startSec && t <= s.endSec; })[0];
@@ -1306,13 +1397,14 @@ on('/budget', function () {
       '<div class="card kpi"><span class="l">Status</span><span class="v" style="font-size:1rem">' + (b.killSwitch ? '<span class="chip bad">KILL SWITCH AKTIF</span>' : b.hasKey ? '<span class="chip ok">Siap</span>' : '<span class="chip warn">API key belum ada</span>') + '</span><span class="tiny dim">' + esc(b.model) + ' · ' + esc(b.imageModel) + '</span></div></div>' +
       (ad ? '<div class="card mt col" style="max-width:720px"><h3>' + ic('gear') + 'Kontrol</h3><div class="grid g2"><label class="f">Batas harian (USD)<input class="i" type="number" step="0.5" id="bgD" value="' + b.dailyCapUsd + '"></label><label class="f">Batas per episode (USD)<input class="i" type="number" step="0.1" id="bgE" value="' + b.episodeCapUsd + '"></label>' +
         '<label class="f">Model teks<input class="i" id="bgM" value="' + esc(b.model) + '"></label><label class="f">Model gambar<input class="i" id="bgIM" value="' + esc(b.imageModel) + '"></label></div>' +
-        '<label class="f">Gemini API key ' + (b.hasKey ? '(tersimpan — isi untuk mengganti)' : '') + '<input class="i" id="bgK" type="password" placeholder="AIza…" autocomplete="off"></label><label class="check"><input type="checkbox" id="bgKS"' + (b.killSwitch ? ' checked' : '') + '><span><b>Kill switch</b> — hentikan semua panggilan AI segera</span></label>' +
-        '<div class="row"><button class="btn pri" data-act="bgSave">Simpan</button>' + (b.hasKey ? '<button class="btn bad" data-act="bgClr">Hapus API key</button>' : '') + '</div><div class="tiny dim">Kunci disimpan di Script Properties server, tidak pernah dikirim ke browser. Dapatkan di Google AI Studio. Jangan kirim naskah rahasia memakai kunci tier gratis karena data dapat dipakai untuk peningkatan layanan oleh Google.</div></div>' : '') +
+        '<label class="f">Gemini API key ' + (b.hasKey ? '(tersimpan — isi untuk mengganti)' : '') + '<input class="i" id="bgK" type="password" placeholder="AIza… (tempel apa adanya)" autocomplete="off" spellcheck="false" autocapitalize="off"></label><label class="check"><input type="checkbox" id="bgKS"' + (b.killSwitch ? ' checked' : '') + '><span><b>Kill switch</b> — hentikan semua panggilan AI segera</span></label>' +
+        '<div class="row"><button class="btn pri" data-act="bgSave">Simpan</button>' + (b.hasKey ? '<button class="btn" data-act="bgTest">Uji kunci</button><button class="btn bad" data-act="bgClr">Hapus API key</button>' : '') + '</div><div class="tiny dim">Kunci disimpan di Script Properties server, tidak pernah dikirim ke browser. Dapatkan di Google AI Studio. Jangan kirim naskah rahasia memakai kunci tier gratis karena data dapat dipakai untuk peningkatan layanan oleh Google.</div></div>' : '') +
       '<div class="grid g2 mt"><div class="card"><h3>Per fitur</h3>' + (Object.keys(b.byFeature).map(function (k) { var f = b.byFeature[k]; return '<div class="row between small" style="padding:6px 0;border-top:1px solid var(--line)"><span class="chip">' + esc(k) + '</span><span>' + f.calls + '× · ' + usd(f.costUsd) + '</span></div>'; }).join('') || '<div class="empty">Belum ada pemakaian</div>') + '</div>' +
       '<div class="card pad0"><div style="padding:14px 14px 4px"><h3>Panggilan terakhir</h3></div><div class="list">' + b.recent.map(function (u) { return '<div class="li tiny"><span class="chip">' + esc(u.feature) + '</span><span class="grow dim">' + (u.inTokens + u.outTokens) + ' token</span><span>' + usd(u.costUsd) + '</span><span class="dim">' + ago(u.createdAt) + '</span></div>'; }).join('') + '</div></div></div>');
   }).catch(err);
 });
-ACT.bgSave = function () { var d = { dailyCapUsd: num('bgD'), episodeCapUsd: num('bgE'), killSwitch: val('bgKS'), model: val('bgM'), imageModel: val('bgIM') }; if (val('bgK')) d.apiKey = val('bgK').trim(); run(api('budget.save', d, { noQueue: true }), 'Anggaran disimpan').then(route); };
+ACT.bgSave = function () { var d = { dailyCapUsd: num('bgD'), episodeCapUsd: num('bgE'), killSwitch: val('bgKS'), model: val('bgM'), imageModel: val('bgIM') }; if (val('bgK')) d.apiKey = val('bgK'); run(api('budget.save', d, { noQueue: true }), 'Anggaran disimpan').then(function (r) { if (r && r.keyTest) toast(r.keyTest.ok ? '✓ ' + r.keyTest.message : 'Kunci disimpan, tetapi uji belum berhasil: ' + r.keyTest.message, r.keyTest.ok ? 'ok' : 'bad'); route(); }); };
+ACT.bgTest = function () { run(api('ai.testKey', {}, { noQueue: true })).then(function (r) { toast(r.ok ? '✓ ' + r.message : 'Gagal (' + r.code + '): ' + r.message, r.ok ? 'ok' : 'bad'); }); };
 ACT.bgClr = function () { confirmBox('Hapus API key Gemini?').then(function (y) { if (y) run(api('budget.save', { clearKey: true }, { noQueue: true }), 'Dihapus').then(route); }); };
 
 on('/audit', function () {
@@ -1417,9 +1509,13 @@ ACT.lcGo = function () { run(api('license.activate', { key: val('lcK') }), 'Lise
 
 SETV.sys = function (st) {
   sb('<div class="grid g2"><div class="card col"><h3>Pendaftaran & QC</h3><label class="check"><input type="checkbox" id="syR"' + (st.publicRegistration !== false ? ' checked' : '') + '><span>Izinkan penonton mendaftar sendiri</span></label><div class="grid g2"><label class="f">Durasi maksimal episode (dtk)<input class="i" type="number" id="syM" value="' + st.qc.maxDurationSec + '"></label><label class="f">Skor hook minimum<input class="i" type="number" id="syH" value="' + st.qc.minHookScore + '"></label></div><button class="btn pri" data-act="sysSave">Simpan</button></div>' +
+    '<div class="card col" style="grid-column:1/-1"><h3>' + ic('shield') + 'Identitas penyelenggara (dipakai di Syarat & Ketentuan dan Pemberitahuan Privasi)</h3><div class="grid g3">' +
+    [['lgBrand', 'Nama layanan', 'brand'], ['lgCompany', 'Nama badan usaha / penyelenggara', 'company'], ['lgEmail', 'Email kontak', 'email'], ['lgPhone', 'WhatsApp kontak', 'phone'], ['lgCity', 'Kota (domisili hukum)', 'city'], ['lgEff', 'Tanggal berlaku', 'effective']].map(function (f) { return '<label class="f">' + f[1] + '<input class="i" id="' + f[0] + '" value="' + esc(st.legal[f[2]]) + '"></label>'; }).join('') +
+    '</div><label class="f">Alamat<input class="i" id="lgAddr" value="' + esc(st.legal.address) + '"></label><div class="row"><label class="f" style="width:160px">Usia minimal<input class="i" type="number" id="lgAge" value="' + st.legal.minAge + '"></label><button class="btn pri" data-act="legalSave" style="align-self:flex-end">Simpan identitas</button><a class="btn" href="#/terms" style="align-self:flex-end">Lihat S&K</a><a class="btn" href="#/privacy" style="align-self:flex-end">Lihat Privasi</a></div><div class="tiny dim">Template ini disusun mengacu UU PDP & praktik umum layanan digital; bukan nasihat hukum — mintakan tinjauan konsultan hukum sebelum dipakai komersial.</div></div>' +
     '<div class="card col"><h3>Backup</h3><p class="small muted">Ekspor seluruh tabel (tanpa hash password & sesi) ke berkas JSON di folder Drive “CineAI Studio - Media”. Google Sheet sendiri juga punya riwayat versi (File → Riwayat versi).</p><button class="btn" data-act="bkGo">' + ic('down') + 'Backup ke Drive</button><div id="bkOut"></div>' +
     '<h3 class="mt">Cache perangkat</h3><p class="small muted">Antrean offline: ' + S.outbox.length + ' aksi.</p><div class="row"><button class="btn" data-act="clearCache">Hapus cache</button>' + (S.outbox.length ? '<button class="btn bad" data-act="clearQueue">Buang antrean</button>' : '') + '</div></div></div>');
 };
+ACT.legalSave = function () { run(api('settings.save', { legal: { brand: val('lgBrand'), company: val('lgCompany'), email: val('lgEmail'), phone: val('lgPhone'), city: val('lgCity'), effective: val('lgEff'), address: val('lgAddr'), minAge: num('lgAge') } }, { noQueue: true }), 'Identitas legal disimpan').then(function () { LS.del('boot'); boot(); }); };
 ACT.sysSave = function () { run(api('settings.save', { publicRegistration: val('syR'), qc: { maxDurationSec: num('syM'), minHookScore: num('syH') } }, { noQueue: true }), 'Disimpan'); };
 ACT.bkGo = function () { run(api('backup.export', {})).then(function (r) { $('#bkOut').innerHTML = '<div class="note small">' + r.tables.map(function (t) { return esc(t.name) + ': ' + t.rows; }).join(' · ') + '<br><a href="' + esc(r.driveUrl) + '" target="_blank" rel="noopener">Buka berkas backup</a></div>'; }); };
 ACT.clearQueue = function () { confirmBox('Buang ' + S.outbox.length + ' aksi yang belum terkirim?').then(function (y) { if (y) { S.outbox = []; LS.set('outbox', []); renderNet(); route(); } }); };
@@ -1440,7 +1536,7 @@ ACT.tsGo = function () {
 var deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; var t = $('.top'); if (t && !$('#instBtn')) t.insertAdjacentHTML('beforeend', '<button id="instBtn" class="btn sm" data-act="install">' + ic('down') + '<span class="hide-m">Pasang</span></button>'); });
 ACT.install = function () { if (!deferredPrompt) return toast('Gunakan menu browser → Tambahkan ke layar utama'); deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; var b = $('#instBtn'); if (b) b.remove(); }); };
-if (!IS_GAS && 'serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+if (!IS_GAS && !IS_DEMO && 'serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('./sw.js').then(function (reg) {
       reg.addEventListener('updatefound', function () { var nw = reg.installing; nw && nw.addEventListener('statechange', function () { if (nw.state === 'installed' && navigator.serviceWorker.controller) toast('Versi baru tersedia — muat ulang halaman untuk memperbarui'); }); });
