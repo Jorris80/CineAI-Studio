@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CineAI Studio</title>
+<meta name="description" content="Studio produksi & pemutar drama vertikal 9:16 berbasis Google Sheets — naskah, storyboard, subtitle, QC, koin & royalti.">
+<meta name="theme-color" content="#0b0a09">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg:#0b0a09;--bg2:#13110f;--card:#1a1714;--card2:#221e1a;--line:#2e2924;--line2:#3b342d;
+  --tx:#f3eee7;--tx2:#b9afa3;--tx3:#857b70;--acc:#f59e0b;--acc2:#fbbf24;--accTx:#1a1206;
+  --ok:#34d399;--warn:#fbbf24;--bad:#f87171;--info:#60a5fa;--vio:#a78bfa;
+  --r:14px;--r2:10px;--sh:0 10px 30px rgba(0,0,0,.45);
+  --safeB:env(safe-area-inset-bottom,0px);--safeT:env(safe-area-inset-top,0px);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+:root[data-theme="light"]{--bg:#f6f3ee;--bg2:#eee9e1;--card:#fff;--card2:#f7f3ed;--line:#e3dbd0;--line2:#d4c9bb;--tx:#1d1914;--tx2:#5a5148;--tx3:#8a8076;--sh:0 8px 24px rgba(60,40,10,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:15px;line-height:1.45}
+body{min-height:100vh;overflow-x:hidden}
+a{color:var(--acc2)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0 0 .4em;line-height:1.2;letter-spacing:-.01em}
+h1{font-size:1.5rem}h2{font-size:1.22rem}h3{font-size:1.05rem}
+.ico{flex:0 0 auto}.empty .ico{width:40px;height:40px}
+.muted{color:var(--tx2)}.dim{color:var(--tx3)}.small{font-size:.82rem}.tiny{font-size:.72rem}.mono{font-family:var(--mono)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.nw{flex-wrap:nowrap}.grow{flex:1;min-width:0}
+.col{display:flex;flex-direction:column;gap:10px}
+.between{justify-content:space-between}.end{justify-content:flex-end}.center{justify-content:center}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gauto{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}.gcards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.mt{margin-top:12px}.mt2{margin-top:20px}.mb{margin-bottom:12px}
+.hide{display:none!important}.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------- shell ---------- */
+.app{display:flex;min-height:100vh}
+.side{width:236px;flex:0 0 236px;background:var(--bg2);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;overflow-y:auto;padding:14px 10px 20px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + var(--safeT)) 16px 10px;display:flex;align-items:center;gap:10px}
+.content{padding:18px 16px 110px;max-width:1240px;width:100%;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),#b45309);display:grid;place-items:center;overflow:hidden;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+.logo img{width:100%;height:100%;object-fit:cover;transform:scale(var(--lz,1));transition:transform .25s}
+.logo svg{width:22px;height:22px;color:var(--accTx)}
+.brand-t{font-weight:900;letter-spacing:.06em;font-size:1rem;line-height:1}.brand-t b{color:var(--acc)}
+.brand-s{font-size:.68rem;color:var(--tx3);margin-top:3px;letter-spacing:.02em}
+.badge{font-size:.62rem;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:99px;background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc2);border:1px solid color-mix(in srgb,var(--acc) 35%,transparent)}
+.nav{display:flex;flex-direction:column;gap:2px;margin-top:16px}
+.nav .sec{font-size:.66rem;letter-spacing:.12em;color:var(--tx3);margin:14px 10px 6px;font-weight:700;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:var(--tx2);text-decoration:none;font-weight:600;font-size:.9rem}
+.nav a:hover{background:var(--card);color:var(--tx)}
+.nav a.on{background:var(--card2);color:var(--acc2);box-shadow:0 0 0 1px var(--line2) inset}
+.nav a svg,.bnav a svg{width:18px;height:18px;flex:0 0 auto}
+.nav .cnt{margin-left:auto;background:var(--bad);color:#fff;border-radius:99px;font-size:.66rem;padding:1px 6px}
+.bnav{display:none}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--card2);display:grid;place-items:center;overflow:hidden;font-weight:800;font-size:.8rem;color:var(--acc2);flex:0 0 auto;border:1px solid var(--line2);cursor:zoom-in}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar.lg{width:84px;height:84px;font-size:1.5rem}
+.net{font-size:.7rem;padding:3px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--tx2);white-space:nowrap}
+.net.off{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+.net.q{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+
+/* ---------- komponen ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.card.pad0{padding:0;overflow:hidden}.card.hl{border-color:color-mix(in srgb,var(--acc) 45%,var(--line))}
+.card h3{display:flex;align-items:center;gap:8px}
+.kpi{display:flex;flex-direction:column;gap:2px}.kpi .v{font-size:1.55rem;font-weight:850;letter-spacing:-.02em}.kpi .l{font-size:.74rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 14px;border-radius:11px;border:1px solid var(--line2);background:var(--card2);color:var(--tx);font-weight:700;font-size:.88rem;cursor:pointer;white-space:nowrap;text-decoration:none;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.97)}.btn:hover{background:var(--line)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--accTx)}.btn.pri:hover{background:var(--acc2)}
+.btn.ghost{background:transparent}.btn.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line2))}
+.btn.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line2))}
+.btn.sm{min-height:32px;padding:5px 10px;font-size:.8rem;border-radius:9px}
+.btn.icon{width:40px;padding:0}.btn.sm.icon{width:32px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn svg{width:16px;height:16px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:99px;background:var(--card2);border:1px solid var(--line2);color:var(--tx2);white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.chip.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 35%,transparent);background:color-mix(in srgb,var(--info) 10%,transparent)}
+.chip.vio{color:var(--vio);border-color:color-mix(in srgb,var(--vio) 35%,transparent);background:color-mix(in srgb,var(--vio) 10%,transparent)}
+.chip.acc{color:var(--acc2);border-color:color-mix(in srgb,var(--acc) 40%,transparent);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.78rem;font-weight:700;color:var(--tx2)}
+input.i,select.i,textarea.i{width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:16px;outline:none;min-height:42px}
+textarea.i{min-height:84px;resize:vertical;line-height:1.4}
+input.i:focus,select.i:focus,textarea.i:focus{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc)}
+input[type=range]{accent-color:var(--acc);width:100%}
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:.9rem;cursor:pointer}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);margin:0 -16px 14px;padding:0 16px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{padding:10px 12px;font-weight:700;font-size:.86rem;color:var(--tx3);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tabs a.on{color:var(--acc2);border-color:var(--acc)}
+.tabs a svg{width:15px;height:15px}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}.li.click{cursor:pointer}.li.click:hover{background:var(--card2)}
+.empty{padding:34px 16px;text-align:center;color:var(--tx3)}
+.empty svg{opacity:.5;margin-bottom:8px}
+table.t{width:100%;border-collapse:collapse;font-size:.86rem}
+table.t th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);padding:8px 10px;border-bottom:1px solid var(--line)}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px}
+.note{padding:10px 12px;border-radius:10px;background:var(--card2);border:1px dashed var(--line2);font-size:.84rem;color:var(--tx2)}
+.note.warn{border-color:color-mix(in srgb,var(--warn) 50%,transparent);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+.note.bad{border-color:color-mix(in srgb,var(--bad) 50%,transparent);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+.code{font-family:var(--mono);font-size:.76rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto}
+hr.s{border:0;border-top:1px solid var(--line);margin:14px 0}
+
+/* ---------- serial/episode ---------- */
+.cover{aspect-ratio:9/16;border-radius:12px;overflow:hidden;position:relative;background:#222;display:flex;align-items:flex-end}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover .ov{position:relative;padding:10px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff}
+.cover .ov b{display:block;font-size:.92rem;line-height:1.2}
+.cover .tagx{position:absolute;top:8px;left:8px}
+.gen-cover{position:absolute;inset:0}
+.pipe{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0 6px}
+.pipe .st{flex:1 0 auto;min-width:86px;font-size:.66rem;font-weight:800;letter-spacing:.03em;text-align:center;padding:6px 6px;border-radius:8px;background:var(--card2);color:var(--tx3);border:1px solid var(--line)}
+.pipe .st.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.pipe .st.cur{background:var(--acc);color:var(--accTx);border-color:var(--acc)}
+.scene{border:1px solid var(--line2);border-radius:12px;padding:12px;background:var(--bg2)}
+.scene+.scene{margin-top:12px}
+.subrow{display:grid;grid-template-columns:110px 1fr 1fr 70px 34px;gap:6px;align-items:start;margin-top:6px}
+.dlgrow{display:grid;grid-template-columns:120px 100px 1fr 64px 34px;gap:6px;align-items:start;margin-top:6px}
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.frame{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.frame .img{aspect-ratio:9/16;background:repeating-linear-gradient(135deg,#1c1916,#1c1916 10px,#181512 10px,#181512 20px);position:relative;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;cursor:zoom-in}
+.frame .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.frame .img .p{font-size:.66rem;color:var(--tx3);display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
+.frame .meta{padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:.78rem}
+.ring{width:96px;height:96px}
+.chk{display:flex;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}.chk:first-child{border-top:0}
+.chk .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:900;flex:0 0 auto}
+.ic.PASSED{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.ic.WARNING{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}.ic.FAILED{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+.cmt{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.cmt:first-child{border-top:0}.cmt.res{opacity:.55}
+.ts{font-family:var(--mono);font-size:.72rem;background:var(--card2);padding:2px 6px;border-radius:6px;color:var(--acc2);border:1px solid var(--line2)}
+
+/* ---------- pemutar 9:16 ---------- */
+.watch-wrap{display:flex;gap:18px;align-items:flex-start;justify-content:center}
+.player{position:relative;width:min(420px,100%);aspect-ratio:9/16;max-height:calc(100vh - 120px);background:#000;border-radius:18px;overflow:hidden;box-shadow:var(--sh);touch-action:pan-x}
+.player video,.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;background:#000}
+.player .poster{position:absolute;inset:0}
+.p-top{position:absolute;top:0;left:0;right:0;padding:12px;background:linear-gradient(rgba(0,0,0,.7),transparent);color:#fff;z-index:3;display:flex;gap:8px;align-items:center}
+.p-side{position:absolute;right:8px;bottom:110px;display:flex;flex-direction:column;gap:14px;z-index:4}
+.p-side button{width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px)}
+.p-side button.on{color:#fb7185}.p-side button.on2{color:var(--acc2)}
+.p-side small{display:block;font-size:.62rem;color:#fff;text-align:center;margin-top:2px;text-shadow:0 1px 2px #000}
+.p-side svg{width:22px;height:22px}
+.p-bot{position:absolute;left:0;right:0;bottom:0;padding:14px 64px 16px 14px;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff;z-index:3}
+.p-sub{position:absolute;left:8%;right:8%;bottom:26%;text-align:center;z-index:3;pointer-events:none}
+.p-sub span{display:inline;background:rgba(0,0,0,.62);color:#fff;font-weight:700;font-size:1rem;line-height:1.5;padding:2px 8px;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.p-lock{position:absolute;inset:0;z-index:6;background:rgba(10,8,6,.86);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px;text-align:center;color:#fff}
+.p-hook{position:absolute;left:12px;right:12px;bottom:120px;z-index:5;background:rgba(0,0,0,.78);border:1px solid var(--acc);border-radius:14px;padding:14px;color:#fff;animation:pop .35s ease}
+.p-prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.18);z-index:4}.p-prog i{display:block;height:100%;background:var(--acc)}
+@keyframes pop{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.ep-pills{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px}
+.ep-pill{aspect-ratio:1;border-radius:10px;background:var(--card2);border:1px solid var(--line2);display:grid;place-items:center;font-weight:800;cursor:pointer;position:relative}
+.ep-pill.on{background:var(--acc);color:var(--accTx)}.ep-pill.lock::after{content:"🔒";position:absolute;top:2px;right:3px;font-size:.6rem}
+.coin{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--acc2)}
+.pkg{border:1px solid var(--line2);border-radius:12px;padding:12px;text-align:center;cursor:pointer;background:var(--bg2)}
+.pkg.on{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent)}
+.pkg b{font-size:1.25rem;display:block}
+
+/* ---------- overlay ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
+.modal{background:var(--card);border:1px solid var(--line2);border-radius:18px;width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto;box-shadow:var(--sh)}
+.modal.wide{width:min(920px,100%)}
+.modal .mh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
+.modal .mb{padding:16px}.modal .mf{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--card)}
+.lightbox{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden}
+.lightbox img{max-width:94vw;max-height:86vh;transition:transform .1s;transform-origin:center;user-select:none;-webkit-user-drag:none}
+.lightbox .lb-tools{position:absolute;bottom:calc(18px + var(--safeB));left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.lightbox .lb-x{position:absolute;top:calc(14px + var(--safeT));right:14px}
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safeB));transform:translateX(-50%);z-index:99;background:var(--card2);border:1px solid var(--line2);padding:11px 16px;border-radius:12px;box-shadow:var(--sh);font-weight:600;font-size:.88rem;max-width:calc(100vw - 32px);animation:pop .2s}
+.toast.bad{border-color:var(--bad);color:#fecaca}.toast.ok{border-color:var(--ok)}
+.loader{position:fixed;top:0;left:0;right:0;height:3px;z-index:100;overflow:hidden}.loader i{display:block;height:100%;width:40%;background:var(--acc);animation:ld 1s infinite ease-in-out}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@keyframes fade{from{opacity:0}}
+.skel{background:linear-gradient(90deg,var(--card) 0,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:12px;min-height:80px}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* ---------- login ---------- */
+.auth{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.auth-art{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 20% 10%,color-mix(in srgb,var(--acc) 30%,transparent),transparent 60%),#0a0807;display:flex;flex-direction:column;justify-content:flex-end;padding:40px}
+.strip{position:absolute;inset:-20% -10%;display:flex;gap:14px;transform:rotate(-12deg);opacity:.55}
+.strip .c{flex:0 0 120px;display:flex;flex-direction:column;gap:14px;animation:roll 40s linear infinite}
+.strip .c:nth-child(2n){animation-direction:reverse;animation-duration:52s}
+.strip .fr{aspect-ratio:9/16;border-radius:12px;border:1px solid rgba(255,255,255,.08)}
+@keyframes roll{to{transform:translateY(-50%)}}
+.auth-form{display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.auth-box{width:min(400px,100%)}
+.seg{display:flex;background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:transparent;padding:9px;border-radius:9px;font-weight:700;color:var(--tx3);cursor:pointer}
+.seg button.on{background:var(--card2);color:var(--tx);box-shadow:0 0 0 1px var(--line2)}
+
+/* ---------- responsif ---------- */
+@media (max-width:1024px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){
+  .side{display:none}
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safeB))}
+  .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:.64rem;font-weight:700;color:var(--tx3);text-decoration:none;border-radius:10px;position:relative}
+  .bnav a.on{color:var(--acc2)}
+  .bnav .cnt{position:absolute;top:2px;right:22%;background:var(--bad);color:#fff;border-radius:99px;font-size:.58rem;padding:0 5px}
+  .auth{grid-template-columns:1fr}.auth-art{min-height:170px;padding:20px 16px}
+  .watch-wrap{flex-direction:column;align-items:center}
+  .content{padding:14px 16px 110px}
+}
+@media (max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}
+  .g2.keep,.keep2,.g4.keep{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gcards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .subrow,.dlgrow{grid-template-columns:1fr 1fr;}
+  .subrow>:nth-child(2),.subrow>:nth-child(3),.dlgrow>:nth-child(3){grid-column:1/-1}
+  .frames{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{border-radius:18px 18px 0 0;max-height:92vh}
+  .hide-m{display:none!important}
+  h1{font-size:1.3rem}
+  .kpi .v{font-size:1.3rem}
+  .player{width:100%;max-height:calc(100vh - 150px);border-radius:14px}
+  table.t.resp thead{display:none}
+  table.t.resp tr{display:block;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:6px 4px}
+  table.t.resp td{display:flex;justify-content:space-between;gap:12px;border:0;padding:5px 10px}
+  table.t.resp td::before{content:attr(data-l);font-size:.72rem;color:var(--tx3);font-weight:700;text-transform:uppercase}
+}
+@media (min-width:821px){.only-m{display:none!important}}
+@media print{.side,.bnav,.top,.btn{display:none!important}.content{padding:0}body{background:#fff;color:#000}}
+
+.ws-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:12px}.ws-head .ttl{flex:1 1 260px;min-width:0}.ws-head .acts{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:640px){.ws-head .acts{width:100%}.ws-head h1{font-size:1.15rem}}
+.player.hasv .p-bot{bottom:44px;background:linear-gradient(transparent,rgba(0,0,0,.6));padding-bottom:6px}.player.hasv .p-side{bottom:150px}
+
+</style>
+</head>
+<body>
+<div id="app"><div style="min-height:100vh;display:grid;place-items:center;color:#857b70;font-family:system-ui">Memuat CineAI Studio…</div></div>
+<script>window.__BOOT = { mode: 'web' };
+// ⬇ Tempel URL Web App Apps Script Anda (Deploy → Web app → URL berakhiran /exec).
+// Boleh dikosongkan: pengguna dapat mengisinya di menu Koneksi.
+window.__API_URL = 'https://script.google.com/macros/s/AKfycby1CwaBn91uMZCWcfpsh0vIaJXKLFO44sjptsjhYu_P2gqGFuBjKHFPkQcUBDTt31YL/exec';</script>
+<script>
+/* CineAI Studio — inti klien (API, offline, router, UI helper) */
+'use strict';
+var BOOT = window.__BOOT || { mode: 'web' };
+var IS_GAS = BOOT.mode === 'gas' && typeof google !== 'undefined' && google.script && google.script.run;
+var DEFAULT_API = window.__API_URL || '';
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem('cine_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem('cine_' + k, JSON.stringify(v)); } catch (e) { /* kuota penuh / privat */ } },
+  del: function (k) { try { localStorage.removeItem('cine_' + k); } catch (e) { } }
+};
+var S = { boot: null, user: null, token: LS.get('token', ''), online: navigator.onLine, outbox: LS.get('outbox', []), cache: {}, busy: 0 };
+var DEVICE = LS.get('dev', '') || (function () { var d = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); LS.set('dev', d); return d; })();
+
+/* ---------------- util ---------------- */
+function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function $(s, r) { return (r || document).querySelector(s); }
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function val(id) { var e = document.getElementById(id); if (!e) return ''; return e.type === 'checkbox' ? e.checked : e.value; }
+function num(id) { return Number(val(id)) || 0; }
+function uuid() { return 'op' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+function idr(n) { return 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
+function usd(n) { return '$' + (Number(n) || 0).toFixed(4); }
+function fmtN(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'jt' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'rb' : String(n); }
+function fmtDate(s, withTime) { if (!s) return '-'; var d = new Date(s); if (isNaN(d)) return s; return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + (withTime ? ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''); }
+function ago(s) { var m = (Date.now() - new Date(s)) / 60000; if (m < 1) return 'baru saja'; if (m < 60) return Math.floor(m) + ' mnt lalu'; if (m < 1440) return Math.floor(m / 60) + ' jam lalu'; return Math.floor(m / 1440) + ' hari lalu'; }
+function secFmt(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+function initials(n) { return String(n || '?').split(/\s+/).map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase(); }
+function hashHue(s) { var h = 0; s = String(s || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+function genCover(seed, label) {
+  var h = hashHue(seed), h2 = (h + 40) % 360;
+  return '<svg class="gen-cover" viewBox="0 0 90 160" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g' + h + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(' + h + ',55%,28%)"/><stop offset="1" stop-color="hsl(' + h2 + ',60%,10%)"/></linearGradient></defs><rect width="90" height="160" fill="url(#g' + h + ')"/>' +
+    '<circle cx="' + (20 + h % 50) + '" cy="' + (30 + h % 60) + '" r="38" fill="hsl(' + h2 + ',70%,55%)" opacity=".18"/><text x="45" y="78" text-anchor="middle" font-size="34" font-weight="900" fill="rgba(255,255,255,.16)" font-family="system-ui">' + esc(initials(label)) + '</text></svg>';
+}
+function imgOr(url, seed, label) { return url ? '<img loading="lazy" src="' + esc(url) + '" alt="" onerror="this.remove()">' + genCover(seed, label) : genCover(seed, label); }
+function avatarHtml(u, cls) { return '<span class="avatar ' + (cls || '') + '" data-act="zoomImg" data-src="' + esc(u && u.avatarUrl || '') + '">' + (u && u.avatarUrl ? '<img src="' + esc(u.avatarUrl) + '" alt="">' : esc(initials(u && u.name))) + '</span>'; }
+function dl(name, text, mime) { var b = new Blob([text], { type: mime || 'text/plain;charset=utf-8' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Disalin ✓', 'ok'); }, function () { var x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); toast('Disalin ✓', 'ok'); } catch (e) { } x.remove(); }); }
+function can(roles) { return S.user && roles.split(',').indexOf(S.user.role) >= 0; }
+
+/* ---------------- ikon (SVG garis sederhana, buatan sendiri) ---------------- */
+var IC = {
+  home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', film: 'M4 4h16v16H4zM8 4v16M16 4v16M4 8h4M4 12h4M4 16h4M16 8h4M16 12h4M16 16h4',
+  book: 'M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10', layers: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5', vol: 'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', users: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21a7 7 0 0114 0M17 11a3 3 0 100-6M18 14a5 5 0 014 5',
+  coin: 'M12 21a9 9 0 100-18 9 9 0 000 18zM15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2',
+  globe: 'M12 21a9 9 0 100-18 9 9 0 000 18zM3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z',
+  trend: 'M3 17l6-6 4 4 8-8M14 7h7v7', clock: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2', term: 'M4 5h16v14H4zM8 10l3 2-3 2M13 15h4',
+  gear: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 00-2-1.2L14 3h-4l-.5 2.6a7 7 0 00-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 002 1.2L10 21h4l.5-2.6a7 7 0 002-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z',
+  play: 'M7 4l13 8-13 8z', heart: 'M12 20s-7-4.4-9-9a5 5 0 019-3 5 5 0 019 3c-2 4.6-9 9-9 9z', mark: 'M6 3h12v18l-6-4-6 4z', share: 'M4 12v7h16v-7M12 3v13M7 8l5-5 5 5',
+  lock: 'M6 11h12v10H6zM8 11V7a4 4 0 018 0v4', up: 'M12 16V4M7 9l5-5 5 5M4 20h16', spark: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z',
+  plus: 'M12 5v14M5 12h14', trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3', edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4', check: 'M5 12l5 5 9-10', x: 'M6 6l12 12M18 6L6 18',
+  left: 'M15 5l-7 7 7 7', right: 'M9 5l7 7-7 7', out: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11', wallet: 'M3 7h18v13H3zM3 7l3-4h12l2 4M16 13h2', eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',
+  down: 'M12 4v12M7 11l5 5 5-5M4 20h16', refresh: 'M20 11a8 8 0 10-2.3 5.7M20 4v7h-7', mic: 'M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3zM5 11a7 7 0 0014 0M12 18v3', list: 'M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1',
+  sun: 'M12 17a5 5 0 100-10 5 5 0 000 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4', moon: 'M21 13A9 9 0 1111 3a7 7 0 0010 10z',
+  clap: 'M4 10h16v10H4zM4 10l2-5 14 0-2 5M8 5l2 5M13 5l2 5', key: 'M15 7a4 4 0 11-4 4l-7 7v3h3l1-1v-2h2v-2h2l1.3-1.3A4 4 0 0115 7z', zoomin: 'M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5M11 8v6M8 11h6', zoomout: 'M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5M8 11h6',
+  wifi: 'M2 9a15 15 0 0120 0M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0M12 19.5h.01'
+};
+function ic(n, cls) { return '<svg class="ico ' + (cls || '') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (IC[n] || IC.x) + '"/></svg>'; }
+
+/* ---------------- toast, loader, modal, lightbox ---------------- */
+var toastT;
+function toast(msg, kind) { var t = $('#toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); } t.className = 'toast ' + (kind || ''); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(function () { t.style.display = 'none'; }, kind === 'bad' ? 5200 : 2800); }
+function busy(d) { S.busy = Math.max(0, S.busy + d); var l = $('#loader'); if (l) l.classList.toggle('hide', !S.busy); }
+function modal(title, body, foot, opt) {
+  closeModal();
+  var bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modal';
+  bg.innerHTML = '<div class="modal ' + (opt && opt.wide ? 'wide' : '') + '" role="dialog" aria-modal="true"><div class="mh"><h3 class="grow" style="margin:0">' + title + '</h3><button class="btn icon ghost" data-act="closeModal" aria-label="Tutup">' + ic('x') + '</button></div><div class="mb">' + body + '</div>' + (foot ? '<div class="mf">' + foot + '</div>' : '') + '</div>';
+  bg.addEventListener('click', function (e) { if (e.target === bg) closeModal(); });
+  document.body.appendChild(bg);
+  var f = bg.querySelector('input,select,textarea'); if (f && window.innerWidth > 640) setTimeout(function () { f.focus(); }, 50);
+  return bg;
+}
+function closeModal() { var m = $('#modal'); if (m) m.remove(); }
+function confirmBox(msg, okLabel) {
+  return new Promise(function (res) {
+    modal('Konfirmasi', '<p>' + msg + '</p>', '<button class="btn" id="cfNo">Batal</button><button class="btn pri" id="cfYes">' + (okLabel || 'Ya, lanjutkan') + '</button>');
+    $('#cfNo').onclick = function () { closeModal(); res(false); }; $('#cfYes').onclick = function () { closeModal(); res(true); };
+  });
+}
+/** Lightbox dengan zoom: roda mouse, cubit (pinch), ketuk ganda, geser */
+function lightbox(src) {
+  if (!src) return;
+  var lb = document.createElement('div'); lb.className = 'lightbox';
+  lb.innerHTML = '<img src="' + esc(src) + '" alt=""><button class="btn icon lb-x" aria-label="Tutup">' + ic('x') + '</button><div class="lb-tools"><button class="btn icon" data-z="-1">' + ic('zoomout') + '</button><button class="btn" data-z="0">Reset</button><button class="btn icon" data-z="1">' + ic('zoomin') + '</button></div>';
+  document.body.appendChild(lb);
+  var img = lb.querySelector('img'), s = 1, x = 0, y = 0, pts = {}, startD = 0, startS = 1, last = null, lastTap = 0;
+  function apply() { img.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')'; }
+  function zoom(f) { s = Math.max(1, Math.min(6, s * f)); if (s === 1) { x = 0; y = 0; } apply(); }
+  lb.querySelector('.lb-x').onclick = function () { lb.remove(); };
+  lb.querySelectorAll('[data-z]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); var z = +b.dataset.z; if (!z) { s = 1; x = y = 0; apply(); } else zoom(z > 0 ? 1.4 : 1 / 1.4); }; });
+  lb.addEventListener('wheel', function (e) { e.preventDefault(); zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15); }, { passive: false });
+  lb.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('button')) return;
+    pts[e.pointerId] = e; lb.setPointerCapture(e.pointerId);
+    var ids = Object.keys(pts);
+    if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startD = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); startS = s; }
+    last = { x: e.clientX, y: e.clientY };
+    var now = Date.now(); if (now - lastTap < 280) { s = s > 1 ? 1 : 2.5; x = y = 0; apply(); } lastTap = now;
+  });
+  lb.addEventListener('pointermove', function (e) {
+    if (!pts[e.pointerId]) return; pts[e.pointerId] = e; var ids = Object.keys(pts);
+    if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; var d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); s = Math.max(1, Math.min(6, startS * d / startD)); apply(); }
+    else if (s > 1 && last) { x += e.clientX - last.x; y += e.clientY - last.y; last = { x: e.clientX, y: e.clientY }; apply(); }
+  });
+  function up(e) { delete pts[e.pointerId]; if (!Object.keys(pts).length && s === 1 && e.target === lb) { /* klik latar */ } }
+  lb.addEventListener('pointerup', up); lb.addEventListener('pointercancel', up);
+  lb.addEventListener('click', function (e) { if (e.target === lb && s === 1) lb.remove(); });
+  document.addEventListener('keydown', function k(e) { if (e.key === 'Escape') { lb.remove(); document.removeEventListener('keydown', k); } });
+}
+
+/* ---------------- API + offline ---------------- */
+var WRITES = { 'profile.save': 1, 'series.save': 1, 'series.delete': 1, 'episode.save': 1, 'episode.status': 1, 'episode.delete': 1, 'character.save': 1, 'character.delete': 1, 'script.save': 1, 'script.approve': 1,
+  'storyboard.update': 1, 'assembly.save': 1, 'qc.signoff': 1, 'comment.add': 1, 'comment.resolve': 1, 'viewer.engage': 1, 'paywall.save': 1, 'hooks.save': 1, 'settings.save': 1, 'budget.save': 1, 'users.save': 1, 'topup.review': 1 };
+var NO_QUEUE = { 'auth.login': 1, 'auth.register': 1, 'media.upload': 1, 'script.aiGenerate': 1, 'script.aiDoctor': 1, 'hooks.generate': 1, 'dub.translate': 1, 'storyboard.generate': 1, 'qc.scan': 1, 'wallet.unlock': 1, 'topup.request': 1, 'license.activate': 1, 'tests.run': 1, 'backup.export': 1 };
+function apiUrl() { return LS.get('api', '') || DEFAULT_API; }
+
+function rawCall(req) {
+  return new Promise(function (resolve, reject) {
+    if (IS_GAS) {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) { var er = new Error(e && e.message || 'Gagal terhubung'); er.network = true; reject(er); }).api(req);
+      return;
+    }
+    var url = apiUrl();
+    if (!url) { var e0 = new Error('URL server (Web App GAS) belum diatur. Buka Pengaturan → Koneksi.'); e0.code = 'NO_API'; reject(e0); return; }
+    fetch(url, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req) })
+      .then(function (r) { return r.json(); }).then(resolve).catch(function (e) { var er = new Error('Tidak dapat terhubung ke server.'); er.network = true; reject(er); });
+  });
+}
+
+function api(action, data, opt) {
+  opt = opt || {};
+  data = data || {};
+  if (!data.deviceId) data.deviceId = DEVICE;
+  var isWrite = !!WRITES[action] || !!NO_QUEUE[action];
+  var key = action + ':' + JSON.stringify(data);
+  var req = { action: action, data: data, token: S.token, opId: WRITES[action] ? (opt.opId || uuid()) : undefined };
+  if (!S.online && WRITES[action] && !NO_QUEUE[action] && !opt.noQueue) return Promise.resolve(enqueue(req, opt.label));
+  if (!S.online && !isWrite) { var c = cacheGet(key); if (c) return Promise.resolve(c); }
+  if (!opt.silent) busy(1);
+  return rawCall(req).then(function (r) {
+    if (!opt.silent) busy(-1);
+    if (!r || !r.ok) {
+      var err = new Error(r && r.error ? r.error.message : 'Kesalahan server'); err.code = r && r.error && r.error.code;
+      if (err.code === 'AUTH_EXPIRED' || err.code === 'AUTH_REQUIRED') { if (S.token) { S.token = ''; S.user = null; LS.del('token'); toast('Sesi berakhir, silakan login lagi', 'bad'); go('#/login'); } }
+      throw err;
+    }
+    if (!isWrite) cacheSet(key, r.data);
+    return r.data;
+  }, function (e) {
+    if (!opt.silent) busy(-1);
+    if (e.network) {
+      setOnline(false);
+      if (WRITES[action] && !NO_QUEUE[action] && !opt.noQueue) return enqueue(req, opt.label);
+      var c2 = cacheGet(key); if (c2) { toast('Offline — menampilkan data tersimpan', ''); return c2; }
+    }
+    throw e;
+  });
+}
+function cacheGet(k) { var all = LS.get('cache', {}); return all[k] ? all[k].d : null; }
+function cacheSet(k, d) {
+  var all = LS.get('cache', {}); all[k] = { d: d, t: Date.now() };
+  var keys = Object.keys(all); if (keys.length > 120) keys.sort(function (a, b) { return all[a].t - all[b].t; }).slice(0, keys.length - 120).forEach(function (x) { delete all[x]; });
+  var s = JSON.stringify(all); if (s.length > 3500000) all = {}; LS.set('cache', all);
+}
+function enqueue(req, label) { S.outbox.push({ req: req, label: label || req.action, t: Date.now() }); LS.set('outbox', S.outbox); renderNet(); toast('Disimpan offline — akan dikirim saat online (' + S.outbox.length + ' antrean)'); return { queued: true }; }
+var flushing = false;
+function flushOutbox() {
+  if (flushing || !S.outbox.length || !S.online) return;
+  flushing = true;
+  var item = S.outbox[0]; item.req.token = S.token;
+  rawCall(item.req).then(function (r) {
+    S.outbox.shift(); LS.set('outbox', S.outbox); renderNet();
+    if (r && !r.ok) toast('Antrean "' + item.label + '" ditolak: ' + r.error.message, 'bad');
+    flushing = false;
+    if (S.outbox.length) flushOutbox(); else { toast('Sinkronisasi offline selesai ✓', 'ok'); route(); }
+  }, function () { flushing = false; setOnline(false); });
+}
+function setOnline(on) { if (S.online === on) return; S.online = on; renderNet(); if (on) flushOutbox(); }
+window.addEventListener('online', function () { setOnline(true); });
+window.addEventListener('offline', function () { setOnline(false); });
+setInterval(function () { if (!S.online && navigator.onLine) { rawCall({ action: 'app.boot', data: {}, token: S.token }).then(function () { setOnline(true); }, function () { }); } else flushOutbox(); }, 20000);
+function renderNet() {
+  var el = $('#net'); if (!el) return;
+  var q = S.outbox.length;
+  el.className = 'net ' + (!S.online ? 'off' : q ? 'q' : '');
+  el.textContent = !S.online ? 'Offline' + (q ? ' · ' + q + ' antre' : '') : q ? 'Sinkron ' + q : 'Online';
+  el.title = q ? S.outbox.map(function (o) { return o.label; }).join(', ') : '';
+}
+
+/* ---------------- unggah berkas ---------------- */
+function pickFile(accept) {
+  return new Promise(function (res) { var i = document.createElement('input'); i.type = 'file'; i.accept = accept || 'image/*'; i.onchange = function () { res(i.files[0] || null); }; i.click(); });
+}
+function readImage(file, maxW, maxH, keepPng) {
+  return new Promise(function (res, rej) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var r = Math.min(1, maxW / img.width, (maxH || maxW) / img.height), w = Math.round(img.width * r), h = Math.round(img.height * r);
+        var c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+        var png = keepPng && /png|gif|webp/.test(file.type);
+        res({ base64: c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.86), mimeType: png ? 'image/png' : 'image/jpeg', name: file.name.replace(/\.\w+$/, png ? '.png' : '.jpg') });
+      };
+      img.onerror = function () { rej(new Error('Gambar tidak bisa dibaca')); };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function readRaw(file) { return new Promise(function (res) { var fr = new FileReader(); fr.onload = function () { res({ base64: fr.result, mimeType: file.type, name: file.name }); }; fr.readAsDataURL(file); }); }
+/** Pilih + kompres + unggah ke Drive. kind: image|audio|video|doc */
+function uploadFlow(kind, opts) {
+  opts = opts || {};
+  var acc = { image: 'image/*', audio: 'audio/*', video: 'video/mp4,video/webm,video/quicktime', doc: 'application/pdf' }[kind];
+  return pickFile(acc).then(function (f) {
+    if (!f) return null;
+    var p = kind === 'image' ? readImage(f, opts.max || 1280, opts.maxH, opts.png) : readRaw(f);
+    return p.then(function (d) { d.kind = kind; d.purpose = opts.purpose || ''; toast('Mengunggah…'); return api('media.upload', d); }).then(function (r) { toast('Terunggah ✓', 'ok'); return r; });
+  }).catch(function (e) { toast(e.message, 'bad'); return null; });
+}
+
+/* ---------------- router & aksi ---------------- */
+var ROUTES = [], ACT = {};
+function on(pattern, fn) { ROUTES.push({ re: new RegExp('^' + pattern.replace(/:\w+/g, '([^/]+)') + '$'), fn: fn }); }
+function go(h) { if (location.hash === h) route(); else location.hash = h; }
+function curPath() { return (location.hash || '#/').slice(1) || '/'; }
+function route() {
+  var p = curPath().split('?')[0];
+  if (!S.user && !/^\/(login|watch|w\/|connect)/.test(p) && p !== '/') { p = '/login'; }
+  if (p === '/') p = S.user ? (S.user.role === 'VIEWER' ? '/watch' : '/dashboard') : '/watch';
+  for (var i = 0; i < ROUTES.length; i++) {
+    var m = p.match(ROUTES[i].re);
+    if (m) { closeModal(); var args = m.slice(1).map(decodeURIComponent); try { ROUTES[i].fn.apply(null, args); } catch (e) { console.error(e); view('<div class="note bad">' + esc(e.message) + '</div>'); } markNav(p); return; }
+  }
+  view('<div class="empty">Halaman tidak ditemukan.<br><a href="#/">Kembali</a></div>');
+}
+window.addEventListener('hashchange', route);
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-act]'); if (!el) return;
+  var fn = ACT[el.dataset.act]; if (!fn) return;
+  e.preventDefault(); fn(el, e);
+});
+ACT.closeModal = closeModal;
+ACT.zoomImg = function (el) { var s = el.dataset.src || (el.querySelector('img') || {}).src; if (s) lightbox(s); };
+ACT.copy = function (el) { copy(el.dataset.text || ($(el.dataset.from) || {}).textContent || ''); };
+ACT.theme = function () { var t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; LS.set('theme', t); renderShell(); route(); };
+ACT.back = function () { history.length > 1 ? history.back() : go('#/'); };
+function err(e) { toast(e && e.message || String(e), 'bad'); }
+function run(p, okMsg) { return p.then(function (r) { if (okMsg && !(r && r.queued)) toast(okMsg, 'ok'); return r; }).catch(function (e) { err(e); throw e; }); }
+
+/* ---------------- shell ---------------- */
+function brandHtml(b) {
+  b = b || (S.boot && S.boot.branding) || {};
+  var logo = b.logoUrl ? '<img src="' + esc(b.logoUrl) + '" alt="logo" style="--lz:' + (b.logoZoom || 1) + '">' : ic('clap');
+  return '<div class="brand" data-act="logoZoom"><span class="logo">' + logo + '</span><div class="hide-m-sm" style="min-width:0"><div class="brand-t trunc">' + esc(b.title || 'CINEAI') + ' <b>' + esc(b.highlight || '') + '</b></div><div class="brand-s trunc">' + esc(b.subtitle || '') + '</div></div></div>';
+}
+ACT.logoZoom = function () { var b = S.boot && S.boot.branding; if (b && b.logoUrl) lightbox(b.logoUrl); else go('#/'); };
+function navItems() {
+  var r = S.user ? S.user.role : 'GUEST', st = r !== 'VIEWER' && r !== 'GUEST';
+  var it = [];
+  if (st) it.push({ h: '/dashboard', i: 'home', l: 'Dasbor', m: 1 }, { h: '/series', i: 'film', l: 'Serial & Episode', m: 1 });
+  it.push({ h: '/watch', i: 'play', l: 'Tonton 9:16', m: 1 });
+  if (S.user) it.push({ h: '/wallet', i: 'wallet', l: 'Dompet Koin', m: !st });
+  if (r === 'ADMIN') it.push({ s: 'Bisnis' }, { h: '/money', i: 'coin', l: 'Monetisasi', m: 1, cnt: S.pendingTopups });
+  if (st) it.push({ s: 'Tata kelola' }, { h: '/budget', i: 'trend', l: 'Anggaran AI' });
+  if (r === 'ADMIN' || r === 'REVIEWER') it.push({ h: '/audit', i: 'clock', l: 'Jejak Audit' });
+  if (r === 'ADMIN') it.push({ h: '/settings', i: 'gear', l: 'Pengaturan', m: 0 }, { h: '/tests', i: 'term', l: 'Uji Sistem' });
+  if (S.user) it.push({ h: '/profile', i: 'users', l: 'Profil Saya', m: !st || r !== 'ADMIN' ? 1 : 0 });
+  if (r === 'ADMIN') it.push({ h: '/settings', i: 'gear', l: 'Atur', m: 1, mOnly: 1 });
+  return it;
+}
+function renderShell() {
+  var b = (S.boot && S.boot.branding) || {};
+  document.documentElement.style.setProperty('--acc', b.accent || '#f59e0b');
+  var items = navItems();
+  var side = items.filter(function (x) { return !x.mOnly; }).map(function (x) { return x.s ? '<div class="sec">' + x.s + '</div>' : '<a href="#' + x.h + '" data-h="' + x.h + '">' + ic(x.i) + '<span>' + x.l + '</span>' + (x.cnt ? '<span class="cnt">' + x.cnt + '</span>' : '') + '</a>'; }).join('');
+  var mob = items.filter(function (x) { return x.m && !x.s; }).slice(0, 5).map(function (x) { return '<a href="#' + x.h + '" data-h="' + x.h + '">' + ic(x.i) + '<span>' + x.l.split(' ')[0] + '</span>' + (x.cnt ? '<span class="cnt">' + x.cnt + '</span>' : '') + '</a>'; }).join('');
+  var lic = S.boot ? '<span class="badge">' + esc(b.badge || '') + '</span>' : '';
+  var user = S.user ? '<a href="#/profile" class="row nw" style="text-decoration:none;color:inherit;gap:8px">' + avatarHtml(S.user).replace('data-act="zoomImg"', '') + '<span class="hide-m small"><b>' + esc(S.user.name) + '</b><br><span class="dim tiny">' + esc(S.user.role) + '</span></span></a>'
+    : '<a class="btn sm pri" href="#/login">Masuk</a>';
+  $('#app').innerHTML = '<div id="loader" class="loader hide"><i></i></div><div class="app"><aside class="side">' + brandHtml(b) + '<div class="row mt" style="padding:0 6px">' + lic + (S.boot && S.boot.tier ? '<span class="chip ' + (S.boot.tier === 'FREE' ? 'warn' : 'acc') + '">' + esc(S.boot.tierLabel) + '</span>' : '') + '</div><nav class="nav">' + side + '</nav>' +
+    (S.user ? '<div class="nav"><a href="#" data-act="logout">' + ic('out') + '<span>Keluar</span></a></div>' : '') + (b.poweredBy ? '<div class="tiny dim" style="margin:18px 10px 0">Powered by ' + esc(b.poweredBy) + '</div>' : '') + '</aside>' +
+    '<div class="main"><header class="top"><span class="only-m">' + brandHtml(b) + '</span><div class="grow"></div><span id="net" class="net">Online</span><button class="btn icon ghost" data-act="theme" aria-label="Tema">' + ic(document.documentElement.dataset.theme === 'light' ? 'moon' : 'sun') + '</button>' + user + '</header>' +
+    '<main class="content" id="view"></main></div></div><nav class="bnav">' + mob + '</nav>';
+  renderNet();
+}
+function markNav(p) { $$('.nav a[data-h],.bnav a[data-h]').forEach(function (a) { a.classList.toggle('on', p.indexOf(a.dataset.h) === 0); }); }
+function view(html) { var v = $('#view'); if (!v) { renderShell(); v = $('#view'); } v.innerHTML = html; window.scrollTo(0, 0); }
+function skel(n) { var s = ''; for (var i = 0; i < (n || 3); i++) s += '<div class="skel mt"></div>'; view(s); }
+function pageHead(title, sub, actions) { return '<div class="row between mb" style="align-items:flex-end"><div class="grow"><h1>' + title + '</h1>' + (sub ? '<div class="muted small">' + sub + '</div>' : '') + '</div><div class="row">' + (actions || '') + '</div></div>'; }
+ACT.logout = function () { api('auth.logout', {}, { silent: true }).catch(function () { }); S.token = ''; S.user = null; LS.del('token'); boot(); };
+
+/* ---------------- grafik SVG ---------------- */
+function barChart(data, h) {
+  h = h || 120; var max = Math.max.apply(null, data.map(function (d) { return d.v; }).concat([1])), w = 100 / data.length;
+  return '<svg viewBox="0 0 100 ' + (h + 18) + '" preserveAspectRatio="none" style="width:100%;height:' + (h + 18) + 'px">' + data.map(function (d, i) {
+    var bh = d.v / max * h; return '<rect x="' + (i * w + w * 0.18) + '" y="' + (h - bh) + '" width="' + (w * 0.64) + '" height="' + Math.max(bh, 0.5) + '" rx="1.2" fill="var(--acc)" opacity="' + (0.45 + 0.55 * d.v / max) + '"><title>' + esc(d.day) + ': ' + d.v + '</title></rect>' +
+      '<text x="' + (i * w + w / 2) + '" y="' + (h + 13) + '" font-size="4.2" text-anchor="middle" fill="var(--tx3)">' + esc(d.day) + '</text>';
+  }).join('') + '</svg>';
+}
+function lineChart(pts, opt) {
+  opt = opt || {}; var h = 150, W = 300;
+  if (!pts.length) return '<div class="empty">Belum ada data</div>';
+  var path = pts.map(function (p, i) { return (i ? 'L' : 'M') + (p.x / 100 * W).toFixed(1) + ' ' + (h - p.y / 100 * h).toFixed(1); }).join(' ');
+  var marks = (opt.marks || []).map(function (m) { var x = m.x / 100 * W; return '<line x1="' + x + '" x2="' + x + '" y1="0" y2="' + h + '" stroke="var(--line2)" stroke-dasharray="3 3"/><text x="' + (x + 2) + '" y="10" font-size="7" fill="var(--tx3)">' + esc(m.label) + '</text>'; }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + (h + 16) + '" style="width:100%;height:auto">' + [25, 50, 75].map(function (g) { return '<line x1="0" x2="' + W + '" y1="' + (h - g / 100 * h) + '" y2="' + (h - g / 100 * h) + '" stroke="var(--line)"/><text x="2" y="' + (h - g / 100 * h - 2) + '" font-size="7" fill="var(--tx3)">' + g + '%</text>'; }).join('') +
+    marks + '<path d="' + path + ' L' + W + ' ' + h + ' L0 ' + h + 'Z" fill="var(--acc)" opacity=".12"/><path d="' + path + '" fill="none" stroke="var(--acc)" stroke-width="2.2"/>' +
+    pts.map(function (p) { return '<circle cx="' + (p.x / 100 * W) + '" cy="' + (h - p.y / 100 * h) + '" r="2.6" fill="var(--acc2)"><title>' + esc(p.t || '') + '</title></circle>'; }).join('') +
+    (opt.xl || []).map(function (l) { return '<text x="' + (l.x / 100 * W) + '" y="' + (h + 12) + '" font-size="7" text-anchor="middle" fill="var(--tx3)">' + esc(l.t) + '</text>'; }).join('') + '</svg>';
+}
+function ring(pct, label) {
+  var r = 40, c = 2 * Math.PI * r, col = pct >= 80 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
+  return '<svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="' + r + '" stroke="var(--card2)" stroke-width="10" fill="none"/><circle cx="50" cy="50" r="' + r + '" stroke="' + col + '" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="' + (c * pct / 100) + ' ' + c + '" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="900" fill="var(--tx)">' + pct + '</text><text x="50" y="70" text-anchor="middle" font-size="8" fill="var(--tx3)">' + esc(label || '') + '</text></svg>';
+}
+
+/* ---------------- boot ---------------- */
+function boot() {
+  var th = LS.get('theme', 'dark'); document.documentElement.dataset.theme = th;
+  var cached = LS.get('boot', null);
+  if (cached) { S.boot = cached; S.user = cached.user || null; renderShell(); route(); }
+  return api('app.boot', {}, { silent: !!cached }).then(function (b) {
+    S.boot = b; S.user = b.user; LS.set('boot', b);
+    if (!b.user && S.token) { S.token = ''; LS.del('token'); }
+    renderShell(); route(); refreshBadges();
+  }).catch(function (e) {
+    if (!cached) {
+      S.boot = { branding: { title: 'CINEAI', highlight: 'STUDIO', subtitle: 'Produksi Drama Vertikal 9:16' }, statusLabel: {}, coinPackages: [] };
+      renderShell();
+      if (e.code === 'NO_API') { go('#/connect'); } else view('<div class="note bad">Tidak dapat memuat aplikasi: ' + esc(e.message) + '</div><div class="row mt"><button class="btn pri" onclick="boot()">Coba lagi</button><a class="btn" href="#/connect">Atur koneksi server</a></div>');
+    }
+  });
+}
+function refreshBadges() {
+  if (!can('ADMIN')) return;
+  api('topup.list', { status: 'PENDING' }, { silent: true }).then(function (l) { S.pendingTopups = l.length; $$('.nav a[data-h="/money"] .cnt,.bnav a[data-h="/money"] .cnt').forEach(function (e) { e.remove(); }); if (l.length) $$('.nav a[data-h="/money"],.bnav a[data-h="/money"]').forEach(function (a) { a.insertAdjacentHTML('beforeend', '<span class="cnt">' + l.length + '</span>'); }); }).catch(function () { });
+}
+
+/* ---------------- Login, daftar, koneksi, dasbor, profil ---------------- */
+on('/login', function () {
+  if (S.user) return go('#/');
+  var b = (S.boot && S.boot.branding) || {};
+  var cols = ''; for (var c = 0; c < 6; c++) { var fr = ''; for (var k = 0; k < 10; k++) { var h = hashHue('f' + c + k); fr += '<div class="fr" style="background:linear-gradient(160deg,hsl(' + h + ',45%,22%),hsl(' + ((h + 50) % 360) + ',50%,8%))"></div>'; } cols += '<div class="c">' + fr + fr + '</div>'; }
+  $('#app').innerHTML = '<div class="auth"><div class="auth-art"><div class="strip">' + cols + '</div><div style="position:relative">' + brandHtml(b) +
+    '<h1 style="font-size:2rem;margin-top:18px;max-width:520px" class="hide-m">Dari naskah ke layar ponsel — satu studio untuk drama vertikal 9:16.</h1><p class="muted hide-m" style="max-width:520px">Script Studio, storyboard, subtitle, QC & sign-off, pemutar 9:16, koin & royalti. Berjalan di Google Sheets milik Anda, tetap bisa dipakai saat offline.</p></div></div>' +
+    '<div class="auth-form"><div class="auth-box"><div class="seg mb"><button class="on" data-act="authTab" data-t="in">Masuk</button>' + (S.boot && S.boot.publicRegistration !== false ? '<button data-act="authTab" data-t="up">Daftar penonton</button>' : '') + '</div>' +
+    '<form id="fIn" class="col"><label class="f">Email<input class="i" id="lEmail" type="email" autocomplete="username" required></label><label class="f">Password<input class="i" id="lPass" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Masuk</button></form>' +
+    '<form id="fUp" class="col hide"><label class="f">Nama<input class="i" id="rName" required></label><label class="f">Email<input class="i" id="rEmail" type="email" required></label><label class="f">No. WhatsApp (opsional, untuk notifikasi top-up)<input class="i" id="rPhone" inputmode="tel"></label><label class="f">Password (min 8)<input class="i" id="rPass" type="password" minlength="8" required></label><button class="btn pri" type="submit">Buat akun & mulai menonton</button></form>' +
+    '<div class="row mt center"><a class="btn ghost" href="#/watch">' + ic('play') + 'Tonton sebagai tamu</a>' + (!IS_GAS ? '<a class="btn ghost" href="#/connect">' + ic('wifi') + 'Koneksi</a>' : '') + '</div>' +
+    '<p class="tiny dim mt" style="text-align:center">Akun studio (Admin/Kreator/Reviewer) dibuat oleh admin di menu Pengaturan.</p></div></div></div>';
+  $('#fIn').onsubmit = function (e) { e.preventDefault(); run(api('auth.login', { email: val('lEmail'), password: val('lPass'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
+  $('#fUp').onsubmit = function (e) { e.preventDefault(); run(api('auth.register', { name: val('rName'), email: val('rEmail'), phone: val('rPhone'), password: val('rPass'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
+});
+ACT.authTab = function (el) { $$('.seg button').forEach(function (b) { b.classList.toggle('on', b === el); }); $('#fIn').classList.toggle('hide', el.dataset.t !== 'in'); $('#fUp').classList.toggle('hide', el.dataset.t !== 'up'); };
+function afterLogin(r) { S.token = r.token; S.user = r.user; LS.set('token', r.token); toast('Selamat datang, ' + r.user.name, 'ok'); boot().then(function () { go(r.user.role === 'VIEWER' ? '#/watch' : '#/dashboard'); }); }
+
+on('/connect', function () {
+  view(pageHead('Koneksi server', 'Mode PWA (GitHub Pages) memanggil Web App Google Apps Script Anda.') +
+    '<div class="card col"><label class="f">URL Web App (berakhiran /exec)<input class="i" id="apiU" placeholder="https://script.google.com/macros/s/XXXX/exec" value="' + esc(apiUrl()) + '"></label>' +
+    '<div class="row"><button class="btn pri" data-act="saveApi">Simpan & uji</button><button class="btn" data-act="clearCache">Hapus cache offline</button></div>' +
+    '<div class="note">Dapatkan URL dari Apps Script → Deploy → Manage deployments. Akses Web App: <b>Anyone</b>. Data tetap tersimpan di Google Sheet Anda.</div></div>');
+});
+ACT.saveApi = function () {
+  var u = val('apiU').trim();
+  if (u && !/^https:\/\/script\.google(usercontent)?\.com\//.test(u)) return toast('URL harus dari script.google.com', 'bad');
+  LS.set('api', u); toast('Menguji koneksi…');
+  rawCall({ action: 'app.boot', data: {} }).then(function (r) { if (r.ok) { toast('Terhubung ke ' + r.data.branding.title + ' ✓', 'ok'); LS.del('boot'); boot().then(function () { go('#/'); }); } else toast(r.error.message, 'bad'); }, function (e) { toast(e.message, 'bad'); });
+};
+ACT.clearCache = function () { LS.del('cache'); LS.del('boot'); toast('Cache dibersihkan', 'ok'); };
+
+/* ---------------- Dasbor ---------------- */
+on('/dashboard', function () {
+  if (S.user.role === 'VIEWER') return go('#/watch');
+  skel(4);
+  api('dashboard.get').then(function (d) {
+    var lbl = S.boot.statusLabel || {};
+    var st = Object.keys(d.byStatus).map(function (k) { return '<div class="row between small"><span>' + esc(lbl[k] || k) + '</span><b>' + d.byStatus[k] + '</b></div><div class="bar" style="margin:4px 0 8px"><i style="width:' + (d.episodes ? d.byStatus[k] / d.episodes * 100 : 0) + '%"></i></div>'; }).join('');
+    var lic = S.boot.tier === 'FREE' || S.boot.tier === 'TRIAL' ? '<div class="note warn mb">Lisensi: <b>' + esc(S.boot.tierLabel) + '</b>. ' + (S.boot.tier === 'FREE' ? 'Fitur AI & monetisasi nonaktif.' : 'Semua fitur Pro aktif selama masa trial.') + (can('ADMIN') ? ' <a href="#/settings?tab=license">Aktivasi lisensi</a>' : '') + '</div>' : '';
+    view(pageHead('Halo, ' + esc(S.user.name.split(' ')[0]), esc(S.user.orgName) + ' · ' + esc(S.user.role), can('ADMIN,CREATOR') ? '<a class="btn pri" href="#/series?new=1">' + ic('plus') + 'Serial baru</a>' : '') + lic +
+      '<div class="grid g4 keep2"><div class="card kpi"><span class="l">Serial</span><span class="v">' + d.series + '</span></div><div class="card kpi"><span class="l">Episode</span><span class="v">' + d.episodes + '</span><span class="tiny dim">' + d.byStatus.PUBLISHED + ' tayang</span></div>' +
+      '<div class="card kpi"><span class="l">Penayangan</span><span class="v">' + fmtN(d.views) + '</span><span class="tiny dim">' + fmtN(d.likes) + ' suka</span></div><div class="card kpi"><span class="l">Pendapatan kotor</span><span class="v">' + idr(d.grossIdr) + '</span><span class="tiny dim">' + fmtN(d.coinsSpent) + ' koin · AI hari ini ' + usd(d.aiTodayUsd) + '</span></div></div>' +
+      (d.pendingTopups ? '<a href="#/money" class="note warn mt" style="display:block;text-decoration:none">💰 ' + d.pendingTopups + ' permintaan top-up menunggu verifikasi →</a>' : '') +
+      '<div class="grid g3 mt"><div class="card"><h3>' + ic('eye') + 'Penayangan 7 hari</h3>' + barChart(d.views7d) + '</div><div class="card"><h3>' + ic('layers') + 'Pipeline produksi</h3>' + st + '</div>' +
+      '<div class="card pad0"><div style="padding:14px 14px 4px"><h3>' + ic('list') + 'Antrian kerja Anda</h3></div><div class="list">' + (d.queue.length ? d.queue.map(function (e) { return '<a class="li click" style="text-decoration:none;color:inherit" href="#/ep/' + e.id + '"><span class="chip acc">Ep ' + e.number + '</span><span class="grow trunc">' + esc(e.title) + '</span><span class="chip">' + esc(lbl[e.status] || e.status) + '</span></a>'; }).join('') : '<div class="empty">Tidak ada antrian 🎉</div>') + '</div></div></div>' +
+      '<div class="card mt pad0"><div style="padding:14px 14px 4px" class="row between"><h3>' + ic('clock') + 'Aktivitas terbaru</h3>' + (can('ADMIN,REVIEWER') ? '<a href="#/audit" class="small">Semua</a>' : '') + '</div><div class="list">' + d.recent.map(function (a) { return '<div class="li small"><span class="chip">' + esc(a.action) + '</span><span class="grow trunc dim">' + esc(a.email) + '</span><span class="tiny dim">' + ago(a.createdAt) + '</span></div>'; }).join('') + '</div></div>' +
+      '<div class="only-m mt grid g2 keep"><a class="btn" href="#/budget">' + ic('trend') + 'Anggaran AI</a>' + (can('ADMIN,REVIEWER') ? '<a class="btn" href="#/audit">' + ic('clock') + 'Audit</a>' : '') + (can('ADMIN') ? '<a class="btn" href="#/tests">' + ic('term') + 'Uji sistem</a>' : '') + '<a class="btn" href="#/profile">' + ic('users') + 'Profil</a><button class="btn bad" data-act="logout">' + ic('out') + 'Keluar</button></div>');
+  }).catch(err);
+});
+
+/* ---------------- Profil ---------------- */
+on('/profile', function () {
+  var u = S.user;
+  view(pageHead('Profil saya', esc(u.email) + ' · ' + esc(u.role)) +
+    '<div class="grid g2"><div class="card col"><div class="row">' + avatarHtml(u, 'lg') + '<div class="col" style="gap:6px"><button class="btn sm" data-act="avatarUp">' + ic('up') + 'Ganti foto</button>' + (u.avatarUrl ? '<button class="btn sm ghost" data-act="zoomImg" data-src="' + esc(u.avatarUrl) + '">' + ic('zoomin') + 'Perbesar</button>' : '') + '</div></div>' +
+    '<label class="f">Nama<input class="i" id="pName" value="' + esc(u.name) + '"></label><label class="f">No. WhatsApp<input class="i" id="pPhone" inputmode="tel" value="' + esc(u.phone) + '"></label><button class="btn pri" data-act="saveProfile">Simpan profil</button></div>' +
+    '<div class="card col"><h3>' + ic('key') + 'Ganti password</h3><label class="f">Password lama<input class="i" type="password" id="pOld"></label><label class="f">Password baru (min 8)<input class="i" type="password" id="pNew"></label><button class="btn" data-act="savePass">Ubah password</button><hr class="s"><button class="btn bad" data-act="logout">' + ic('out') + 'Keluar</button></div></div>');
+});
+ACT.avatarUp = function () { uploadFlow('image', { max: 512 }).then(function (r) { if (r) return run(api('profile.save', { avatarUrl: r.url }), 'Foto diperbarui').then(function (u) { S.user = u; renderShell(); route(); }); }); };
+ACT.saveProfile = function () { run(api('profile.save', { name: val('pName'), phone: val('pPhone') }), 'Profil disimpan').then(function (u) { if (u && !u.queued) { S.user = u; renderShell(); route(); } }); };
+ACT.savePass = function () { run(api('profile.save', { oldPassword: val('pOld'), newPassword: val('pNew') }, { noQueue: true }), 'Password diubah').then(function () { $('#pOld').value = $('#pNew').value = ''; }); };
+
+/* ---------------- Studio: serial, episode, karakter ---------------- */
+var GENRES = { ROMANCE_CEO: 'Romansa CEO', REVENGE: 'Balas dendam', HIDDEN_IDENTITY: 'Identitas tersembunyi', FAMILY_SECRET: 'Rahasia keluarga', THRILLER: 'Thriller', COMEDY: 'Komedi', HOROR: 'Horor', RELIGI: 'Religi', FANTASY: 'Fantasi', LAINNYA: 'Lainnya' };
+var ARCH = { PROTAGONIST: 'Protagonis', ANTAGONIST: 'Antagonis', LOVE_INTEREST: 'Pasangan', SUPPORTING: 'Pendukung', CONFIDANT: 'Sahabat' };
+var CONSENT = { SYNTHETIC: 'Sintetis (AI, fiktif)', CONSENTED_ACTOR: 'Aktor dengan surat persetujuan', LICENSED_STOCK: 'Aset stok berlisensi' };
+var FLOW_ORDER = ['DRAFT', 'SCRIPT_IN_PROGRESS', 'SCRIPT_REVIEW', 'STORYBOARD_READY', 'RENDERING', 'QC_PENDING', 'PUBLISHED'];
+function stLabel(s) { return (S.boot.statusLabel || {})[s] || s; }
+function stChip(s) { var k = s === 'PUBLISHED' ? 'ok' : s === 'ARCHIVED' ? '' : s === 'QC_PENDING' || s === 'SCRIPT_REVIEW' ? 'warn' : s === 'DRAFT' ? '' : 'info'; return '<span class="chip ' + k + '">' + esc(stLabel(s)) + '</span>'; }
+function qp(k) { var m = location.hash.match(new RegExp('[?&]' + k + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; }
+
+on('/series', function () {
+  skel(2);
+  api('series.list').then(function (list) {
+    view(pageHead('Serial & Episode', list.length + ' serial di studio Anda', can('ADMIN,CREATOR') ? '<button class="btn pri" data-act="seriesForm">' + ic('plus') + 'Serial baru</button>' : '') +
+      (list.length ? '<div class="grid gcards">' + list.map(function (s) {
+        return '<a href="#/series/' + s.id + '" class="cover" style="text-decoration:none">' + imgOr(s.coverUrl, s.id, s.title) + '<span class="tagx chip acc">' + esc(GENRES[s.genre] || s.genre) + '</span><div class="ov"><b>' + esc(s.title) + '</b><span class="tiny" style="opacity:.8">' + s.episodeCount + '/' + s.plannedEps + ' ep · ' + s.publishedCount + ' tayang</span></div></a>';
+      }).join('') + '</div>' : '<div class="card empty">' + ic('film') + '<br>Belum ada serial. Mulai dengan membuat serial pertama.</div>'));
+    if (qp('new')) ACT.seriesForm();
+  }).catch(err);
+});
+
+ACT.seriesForm = function (el) {
+  var s = el && el.dataset.id ? S.curSeries : {};
+  s = s || {};
+  modal(s.id ? 'Edit serial' : 'Serial baru', '<div class="col"><label class="f">Judul<input class="i" id="sTitle" value="' + esc(s.title) + '" maxlength="120"></label>' +
+    '<div class="grid g2"><label class="f">Genre<select class="i" id="sGenre">' + Object.keys(GENRES).map(function (g) { return '<option value="' + g + '"' + (s.genre === g ? ' selected' : '') + '>' + GENRES[g] + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">Bahasa utama<select class="i" id="sLang">' + ['id', 'en', 'ms', 'su', 'jv'].map(function (l) { return '<option' + (s.language === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">Rencana jumlah episode<input class="i" id="sEps" type="number" min="1" value="' + (s.plannedEps || 30) + '"></label><label class="f">Target durasi/episode (detik)<input class="i" id="sSec" type="number" min="30" value="' + (s.targetSec || 90) + '"></label></div>' +
+    '<label class="f">Logline<textarea class="i" id="sLog" maxlength="400">' + esc(s.logline) + '</textarea></label><label class="f">Sinopsis<textarea class="i" id="sSyn" style="min-height:120px">' + esc(s.synopsis) + '</textarea></label>' +
+    '<label class="f">Tag (pisahkan koma)<input class="i" id="sTags" value="' + esc(s.tags) + '"></label>' +
+    '<div class="row"><div class="cover" style="width:72px;flex:0 0 72px" id="sCovPrev">' + imgOr(s.coverUrl, s.id || 'new', s.title || '?') + '</div><div class="col grow"><input type="hidden" id="sCover" value="' + esc(s.coverUrl) + '"><button class="btn sm" data-act="coverUp">' + ic('up') + 'Unggah poster 9:16</button><span class="tiny dim">Gunakan karya orisinal/berlisensi. Jangan memakai foto orang nyata tanpa izin.</span></div></div></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="seriesSave" data-id="' + esc(s.id || '') + '">Simpan</button>');
+};
+ACT.coverUp = function () { uploadFlow('image', { max: 1080, maxH: 1920 }).then(function (r) { if (r) { $('#sCover').value = r.url; $('#sCovPrev').innerHTML = '<img src="' + esc(r.url) + '">'; } }); };
+ACT.seriesSave = function (el) {
+  run(api('series.save', { id: el.dataset.id, title: val('sTitle'), genre: val('sGenre'), language: val('sLang'), plannedEps: num('sEps'), targetSec: num('sSec'), logline: val('sLog'), synopsis: val('sSyn'), tags: val('sTags'), coverUrl: val('sCover') }), 'Serial disimpan')
+    .then(function (r) { closeModal(); if (r.id && !el.dataset.id) go('#/series/' + r.id); else route(); });
+};
+
+on('/series/:id', function (id) {
+  skel(3);
+  var tab = qp('tab') || 'eps';
+  Promise.all([api('series.list'), api('episodes.list', { seriesId: id }), api('characters.list', { seriesId: id })]).then(function (r) {
+    var s = r[0].filter(function (x) { return x.id === id; })[0]; if (!s) return view('<div class="empty">Serial tidak ditemukan</div>');
+    S.curSeries = s; S.curChars = r[2];
+    var eps = r[1], chars = r[2];
+    var tabs = '<div class="tabs"><a href="#/series/' + id + '?tab=eps" class="' + (tab === 'eps' ? 'on' : '') + '">' + ic('film') + 'Episode (' + eps.length + ')</a><a href="#/series/' + id + '?tab=chars" class="' + (tab === 'chars' ? 'on' : '') + '">' + ic('users') + 'Character Bible (' + chars.length + ')</a>' +
+      (can('ADMIN') ? '<a href="#/series/' + id + '?tab=pay" class="' + (tab === 'pay' ? 'on' : '') + '">' + ic('coin') + 'Paywall</a>' : '') + '</div>';
+    var head = '<div class="row mb" style="align-items:flex-start"><a href="#/series" class="btn icon ghost">' + ic('left') + '</a><div class="cover" style="width:66px;flex:0 0 66px">' + imgOr(s.coverUrl, s.id, s.title) + '</div><div class="grow"><h1 style="margin-bottom:4px">' + esc(s.title) + '</h1><div class="row small"><span class="chip acc">' + esc(GENRES[s.genre] || s.genre) + '</span><span class="dim">' + s.targetSec + ' dtk/ep · ' + s.plannedEps + ' ep · ' + esc(s.language) + '</span></div><p class="muted small clamp2" style="margin:6px 0 0">' + esc(s.logline) + '</p></div>' +
+      '<div class="row">' + (can('ADMIN,CREATOR') ? '<button class="btn sm" data-act="seriesForm" data-id="' + s.id + '">' + ic('edit') + '<span class="hide-m">Edit</span></button>' : '') + (can('ADMIN') ? '<button class="btn sm bad icon" data-act="seriesDel" data-id="' + s.id + '">' + ic('trash') + '</button>' : '') + '</div></div>';
+    var body = '';
+    if (tab === 'eps') {
+      body = (can('ADMIN,CREATOR') ? '<div class="row end mb"><button class="btn pri" data-act="epForm">' + ic('plus') + 'Episode baru</button></div>' : '') +
+        '<div class="card pad0"><div class="list">' + (eps.length ? eps.map(function (e) {
+          return '<a class="li click" href="#/ep/' + e.id + '" style="text-decoration:none;color:inherit"><span class="chip acc" style="min-width:52px;justify-content:center">EP ' + e.number + '</span><div class="grow" style="min-width:0"><b class="trunc" style="display:block">' + esc(e.title) + '</b><span class="tiny dim trunc" style="display:block">' + esc(e.hook || 'Belum ada hook') + '</span></div><span class="hide-m tiny dim">' + secFmt(e.durationSec) + '</span>' + stChip(e.status) + '</a>';
+        }).join('') : '<div class="empty">Belum ada episode</div>') + '</div></div>';
+    } else if (tab === 'chars') {
+      body = '<div class="note mb">Wajah & suara orang nyata adalah data pribadi (UU PDP). Karakter berbasis aktor/stok wajib menyertakan nomor surat persetujuan/lisensi — QC akan memblokir rilis bila kosong.</div>' +
+        (can('ADMIN,CREATOR') ? '<div class="row end mb"><button class="btn pri" data-act="charForm">' + ic('plus') + 'Karakter</button></div>' : '') +
+        '<div class="grid gauto">' + (chars.length ? chars.map(function (c) {
+          return '<div class="card"><div class="row nw">' + avatarHtml({ name: c.name, avatarUrl: c.avatarUrl }, 'lg') + '<div class="grow" style="min-width:0"><b>' + esc(c.name) + '</b><div class="row" style="gap:4px;margin-top:4px"><span class="chip vio">' + esc(ARCH[c.archetype] || c.archetype) + '</span><span class="chip ' + (c.consentType === 'SYNTHETIC' ? 'ok' : c.consentRef ? 'ok' : 'bad') + '">' + esc(c.consentType === 'SYNTHETIC' ? 'Sintetis' : c.consentRef ? 'Consent ✓' : 'Consent ✗') + '</span></div></div></div>' +
+            '<p class="small muted clamp2 mt">' + esc(c.visual) + '</p><div class="tiny dim">Busana: ' + esc(c.wardrobe || '-') + '<br>Suara: ' + esc(c.voice || '-') + '<br>Ref: <span class="mono">' + esc(c.consentRef || '-') + '</span></div>' +
+            (can('ADMIN,CREATOR') ? '<div class="row mt"><button class="btn sm" data-act="charForm" data-id="' + c.id + '">' + ic('edit') + 'Edit</button><button class="btn sm ghost bad" data-act="charDel" data-id="' + c.id + '">' + ic('trash') + '</button></div>' : '') + '</div>';
+        }).join('') : '<div class="card empty">Belum ada karakter</div>') + '</div>';
+    } else if (tab === 'pay') {
+      body = '<div id="payBox"><div class="skel"></div></div>';
+      api('paywall.get', { seriesId: id }).then(function (p) {
+        $('#payBox').innerHTML = '<div class="card col" style="max-width:560px"><label class="check"><input type="checkbox" id="pwOn"' + (p.enabled ? ' checked' : '') + '><span>Aktifkan paywall koin untuk serial ini</span></label>' +
+          '<div class="grid g3"><label class="f">Episode gratis (1..n)<input class="i" type="number" id="pwFree" value="' + p.freeCount + '"></label><label class="f">Koin / episode<input class="i" type="number" id="pwCoin" value="' + p.coinsPerEp + '"></label><label class="f">Season pass (koin)<input class="i" type="number" id="pwSeason" value="' + p.seasonPrice + '"></label></div>' +
+          '<div class="note">Rekomendasi pasar drama vertikal: 3–10 episode gratis sebagai umpan, harga per episode setara Rp1.500–3.000, season pass ±60% dari total harga per episode.</div><button class="btn pri" data-act="pwSave" data-id="' + id + '">Simpan paywall</button></div>';
+      }).catch(err);
+    }
+    view(head + tabs + body);
+  }).catch(err);
+});
+ACT.seriesDel = function (el) { confirmBox('Hapus serial beserta semua episode, naskah, storyboard? Tindakan tidak bisa dibatalkan.', 'Hapus permanen').then(function (y) { if (y) run(api('series.delete', { id: el.dataset.id }, { noQueue: true }), 'Serial dihapus').then(function () { go('#/series'); }); }); };
+ACT.pwSave = function (el) { run(api('paywall.save', { seriesId: el.dataset.id, enabled: val('pwOn'), freeCount: num('pwFree'), coinsPerEp: num('pwCoin'), seasonPrice: num('pwSeason') }), 'Paywall disimpan'); };
+
+ACT.epForm = function (el) {
+  var e = el && el.dataset.id ? S.ws.episode : {};
+  var sid = e.seriesId || S.curSeries.id;
+  modal(e.id ? 'Edit episode' : 'Episode baru', '<div class="col"><div class="grid g2"><label class="f">Nomor<input class="i" type="number" id="eNum" value="' + (e.number || '') + '" placeholder="otomatis"></label><label class="f">Target durasi (dtk)<input class="i" type="number" id="eDur" value="' + (e.durationSec || (S.curSeries && S.curSeries.targetSec) || 90) + '"></label></div>' +
+    '<label class="f">Judul<input class="i" id="eTitle" value="' + esc(e.title) + '"></label><label class="f">Cliffhanger / hook penutup<textarea class="i" id="eHook">' + esc(e.hook) + '</textarea></label>' +
+    '<label class="f">URL video master (Google Drive / MP4 / YouTube)<input class="i" id="eVid" value="' + esc(e.videoUrl) + '" placeholder="https://drive.google.com/file/d/…"></label><button class="btn sm" data-act="vidUp">' + ic('up') + 'Unggah video kecil (≤25MB) ke Drive</button>' +
+    '<label class="f">URL thumbnail<input class="i" id="eThumb" value="' + esc(e.thumbUrl) + '"></label><button class="btn sm" data-act="thumbUp">' + ic('up') + 'Unggah thumbnail</button>' +
+    '<label class="check"><input type="checkbox" id="eFree"' + (e.isFree ? ' checked' : '') + '><span>Selalu gratis (abaikan paywall)</span></label></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="epSave" data-id="' + esc(e.id || '') + '" data-sid="' + sid + '">Simpan</button>');
+};
+ACT.vidUp = function () { uploadFlow('video').then(function (r) { if (r) $('#eVid').value = r.url; }); };
+ACT.thumbUp = function () { uploadFlow('image', { max: 720, maxH: 1280 }).then(function (r) { if (r) $('#eThumb').value = r.url; }); };
+ACT.epSave = function (el) {
+  run(api('episode.save', { id: el.dataset.id, seriesId: el.dataset.sid, number: num('eNum') || undefined, durationSec: num('eDur'), title: val('eTitle'), hook: val('eHook'), videoUrl: val('eVid'), thumbUrl: val('eThumb'), isFree: val('eFree') }), 'Episode disimpan')
+    .then(function (r) { closeModal(); if (r.id && !el.dataset.id) go('#/ep/' + r.id); else route(); });
+};
+ACT.charForm = function (el) {
+  var c = (el && el.dataset.id ? (S.curChars || []).filter(function (x) { return x.id === el.dataset.id; })[0] : null) || {};
+  modal(c.id ? 'Edit karakter' : 'Karakter baru', '<div class="col"><div class="row">' + avatarHtml({ name: c.name || '?', avatarUrl: c.avatarUrl }, 'lg') + '<div class="col grow"><input type="hidden" id="cAv" value="' + esc(c.avatarUrl) + '"><button class="btn sm" data-act="charAvUp">' + ic('up') + 'Unggah potret karakter</button></div></div>' +
+    '<div class="grid g2"><label class="f">Nama<input class="i" id="cName" value="' + esc(c.name) + '"></label><label class="f">Arketipe<select class="i" id="cArch">' + Object.keys(ARCH).map(function (a) { return '<option value="' + a + '"' + (c.archetype === a ? ' selected' : '') + '>' + ARCH[a] + '</option>'; }).join('') + '</select></label></div>' +
+    '<label class="f">Deskripsi visual (dipakai di prompt storyboard)<textarea class="i" id="cVis">' + esc(c.visual) + '</textarea></label><label class="f">Aturan busana<input class="i" id="cWar" value="' + esc(c.wardrobe) + '"></label>' +
+    '<label class="f">Kepribadian<input class="i" id="cPer" value="' + esc(c.personality) + '"></label><label class="f">Profil suara<input class="i" id="cVoi" value="' + esc(c.voice) + '"></label>' +
+    '<div class="grid g2"><label class="f">Asal wajah/suara<select class="i" id="cCon">' + Object.keys(CONSENT).map(function (k) { return '<option value="' + k + '"' + (c.consentType === k ? ' selected' : '') + '>' + CONSENT[k] + '</option>'; }).join('') + '</select></label><label class="f">No./tautan surat persetujuan atau lisensi<input class="i" id="cRef" value="' + esc(c.consentRef) + '"></label></div></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="charSave" data-id="' + esc(c.id || '') + '">Simpan</button>');
+};
+ACT.charAvUp = function () { uploadFlow('image', { max: 640 }).then(function (r) { if (r) { $('#cAv').value = r.url; var a = $('#modal .avatar'); a.innerHTML = '<img src="' + esc(r.url) + '">'; a.dataset.src = r.url; } }); };
+ACT.charSave = function (el) { run(api('character.save', { id: el.dataset.id, seriesId: S.curSeries.id, name: val('cName'), archetype: val('cArch'), visual: val('cVis'), wardrobe: val('cWar'), personality: val('cPer'), voice: val('cVoi'), consentType: val('cCon'), consentRef: val('cRef'), avatarUrl: val('cAv') }), 'Karakter disimpan').then(function () { closeModal(); route(); }); };
+ACT.charDel = function (el) { confirmBox('Hapus karakter ini?').then(function (y) { if (y) run(api('character.delete', { id: el.dataset.id }), 'Dihapus').then(route); }); };
+
+/* ---------------- Workspace episode ---------------- */
+var EP_TABS = [['script', 'book', 'Naskah'], ['board', 'layers', 'Storyboard'], ['audio', 'vol', 'Audio & Subtitle'], ['qc', 'shield', 'QC & Sign-off'], ['collab', 'users', 'Kolaborasi'], ['loc', 'globe', 'Lokalisasi'], ['growth', 'trend', 'Retensi & Hook'], ['synd', 'share', 'Sindikasi']];
+on('/ep/:id', function (id) {
+  var tab = qp('tab') || 'script';
+  skel(3);
+  api('episode.workspace', { id: id }).then(function (w) {
+    S.ws = w; S.curSeries = w.series; S.curChars = w.characters;
+    var e = w.episode, idx = FLOW_ORDER.indexOf(e.status);
+    var pipe = '<div class="pipe">' + FLOW_ORDER.map(function (s, i) { return '<div class="st ' + (i < idx ? 'done' : i === idx ? 'cur' : '') + '">' + (i < idx ? '✓ ' : '') + esc(stLabel(s)) + '</div>'; }).join('') + (e.status === 'ARCHIVED' ? '<div class="st cur">Arsip</div>' : '') + '</div>';
+    var next = w.next.filter(function (n) { return n.allowed; }).map(function (n) {
+      var fwd = FLOW_ORDER.indexOf(n.status) > idx;
+      return '<button class="btn sm ' + (fwd && !n.blockers.length ? 'pri' : '') + '" data-act="epMove" data-s="' + n.status + '" data-b="' + esc(n.blockers.join(' • ')) + '">' + (fwd ? '→ ' : '↩ ') + esc(n.label) + (n.blockers.length ? ' ⚠' : '') + '</button>';
+    }).join('');
+    var head = '<div class="ws-head"><a href="#/series/' + e.seriesId + '" class="btn icon ghost">' + ic('left') + '</a><div class="ttl"><div class="tiny dim trunc">' + esc(w.series.title) + '</div><h1 style="margin:2px 0">EP ' + e.number + ' · ' + esc(e.title) + '</h1><div class="row small">' + stChip(e.status) + '<span class="dim">' + secFmt(e.durationSec) + ' · ' + (w.script ? 'naskah v' + w.script.version : 'belum ada naskah') + '</span></div></div>' +
+      '<div class="acts">' + (e.status === 'PUBLISHED' ? '<a class="btn sm" href="#/w/' + e.id + '">' + ic('play') + 'Tonton</a>' : '') + (can('ADMIN,CREATOR') ? '<button class="btn sm" data-act="epForm" data-id="' + e.id + '">' + ic('edit') + '<span class="hide-m">Edit</span></button>' : '') +
+      (can('ADMIN') ? '<button class="btn sm" data-act="epForce">Override</button><button class="btn sm bad icon" data-act="epDel">' + ic('trash') + '</button>' : '') + '</div></div>' + pipe +
+      (next ? '<div class="row mb mt">' + next + '</div>' : '') +
+      '<div class="tabs">' + EP_TABS.map(function (t) { return '<a href="#/ep/' + id + '?tab=' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + ic(t[1]) + t[2] + '</a>'; }).join('') + '</div><div id="tabBody"><div class="skel"></div></div>';
+    view(head);
+    (TABS[tab] || TABS.script)(w);
+  }).catch(err);
+});
+function reloadWs() { route(); }
+ACT.epMove = function (el) {
+  if (el.dataset.b) return modal('Belum memenuhi syarat', '<div class="note warn">' + esc(el.dataset.b).replace(/ • /g, '<br>• ') + '</div><p class="small muted">Lengkapi syarat di atas, lalu coba lagi.</p>', '<button class="btn" data-act="closeModal">Mengerti</button>');
+  run(api('episode.status', { id: S.ws.episode.id, status: el.dataset.s }, { label: 'Status ' + el.dataset.s }), 'Status → ' + stLabel(el.dataset.s)).then(reloadWs);
+};
+ACT.epForce = function () {
+  modal('Override status (Admin)', '<div class="col"><div class="note warn">Melewati gerbang mutu akan dicatat di jejak audit beserta alasannya.</div><label class="f">Status tujuan<select class="i" id="fSt">' + FLOW_ORDER.concat(['ARCHIVED']).map(function (s) { return '<option value="' + s + '">' + esc(stLabel(s)) + '</option>'; }).join('') + '</select></label><label class="f">Alasan<textarea class="i" id="fRs"></textarea></label></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="epForceGo">Terapkan</button>');
+};
+ACT.epForceGo = function () { run(api('episode.status', { id: S.ws.episode.id, status: val('fSt'), force: true, reason: val('fRs') }, { noQueue: true }), 'Status diubah').then(function () { closeModal(); reloadWs(); }); };
+ACT.epDel = function () { confirmBox('Hapus episode beserta naskah, storyboard, QC?', 'Hapus').then(function (y) { if (y) run(api('episode.delete', { id: S.ws.episode.id }, { noQueue: true }), 'Episode dihapus').then(function () { go('#/series/' + S.ws.episode.seriesId); }); }); };
+
+var TABS = {};
+function tb(html) { var t = $('#tabBody'); if (t) t.innerHTML = html; }
+
+/* ===== Naskah ===== */
+TABS.script = function (w) {
+  var key = 'draft_' + w.episode.id, local = LS.get(key, null);
+  var base = w.script ? { title: w.script.title, hook: w.script.hook, scenes: w.script.scenes } : { title: w.episode.title, hook: w.episode.hook, scenes: [] };
+  S.draft = local && local.basedOn === (w.script ? w.script.version : 0) ? local.d : JSON.parse(JSON.stringify(base));
+  S.draftDirty = !!(local && local.basedOn === (w.script ? w.script.version : 0));
+  renderScript();
+};
+function editable() { var s = S.ws.episode.status; return can('ADMIN,CREATOR') && ['DRAFT', 'SCRIPT_IN_PROGRESS', 'STORYBOARD_READY'].indexOf(s) >= 0; }
+function renderScript() {
+  var w = S.ws, d = S.draft, ed = editable(), sc = w.script;
+  var chars = w.characters.map(function (c) { return c.name; });
+  var dlOpts = '<datalist id="charList">' + chars.concat(['Narator']).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>';
+  var val1 = sc ? '<div class="card mb ' + (sc.validation === 'INVALID' ? '' : 'hl') + '"><div class="row between"><div class="row"><b>Validasi v' + sc.version + '</b><span class="chip ' + (sc.validation === 'VALID' ? 'ok' : sc.validation === 'WARNING' ? 'warn' : 'bad') + '">' + sc.validation + '</span>' + (sc.approved ? '<span class="chip ok">Disetujui ' + esc(sc.approvedBy) + '</span>' : '') + '<span class="chip">' + esc(sc.source) + '</span></div><span class="small dim">' + sc.totalSec + ' dtk total</span></div>' +
+    (sc.issues && sc.issues.length ? '<ul class="small muted" style="margin:8px 0 0;padding-left:18px">' + sc.issues.slice(0, 12).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' : '') + '</div>' : '';
+  var tools = '<div class="row mb">' + (ed ? '<button class="btn pri" data-act="scSave">' + ic('check') + 'Simpan versi' + (S.draftDirty ? ' •' : '') + '</button><button class="btn" data-act="scAdd">' + ic('plus') + 'Adegan</button><button class="btn" data-act="scAi">' + ic('spark') + 'Tulis dengan AI</button>' : '') +
+    (sc ? '<button class="btn" data-act="scDoctor">' + ic('spark') + 'Script doctor</button>' : '') + '<button class="btn" data-act="tableRead">' + ic('mic') + 'Table read</button><button class="btn" data-act="scExport">' + ic('down') + 'Ekspor</button>' +
+    (w.versions.length > 1 ? '<button class="btn" data-act="scDiff">' + ic('list') + 'Bandingkan versi</button>' : '') +
+    (can('ADMIN,REVIEWER') && w.episode.status === 'SCRIPT_REVIEW' ? '<button class="btn ok" data-act="scApprove" data-d="APPROVE">' + ic('check') + 'Setujui naskah</button><button class="btn bad" data-act="scApprove" data-d="REJECT">Minta revisi</button>' : '') + '</div>';
+  var dis = ed ? '' : ' disabled';
+  var scenes = d.scenes.map(function (s, i) {
+    var p = 'scenes.' + i + '.';
+    return '<div class="scene"><div class="row between"><b>Adegan ' + (i + 1) + '</b><span class="tiny dim">' + (s.estimatedSeconds ? '±' + s.estimatedSeconds + ' dtk' : '') + '</span>' + (ed ? '<div class="row"><button class="btn sm icon ghost" data-act="scMove" data-i="' + i + '" data-d="-1">↑</button><button class="btn sm icon ghost" data-act="scMove" data-i="' + i + '" data-d="1">↓</button><button class="btn sm icon ghost bad" data-act="scDel" data-i="' + i + '">' + ic('trash') + '</button></div>' : '') + '</div>' +
+      '<div class="grid g2 mt"><label class="f">Setting (INT./EKS. LOKASI - WAKTU)<input class="i" data-p="' + p + 'setting" value="' + esc(s.setting) + '"' + dis + '></label><label class="f">Karakter hadir (koma)<input class="i" data-p="' + p + 'charactersPresent" data-arr="1" value="' + esc((s.charactersPresent || []).join(', ')) + '"' + dis + '></label></div>' +
+      '<label class="f mt">Ringkasan aksi<textarea class="i" style="min-height:60px" data-p="' + p + 'summary"' + dis + '>' + esc(s.summary) + '</textarea></label>' +
+      '<div class="small mt"><b>Shot</b> <span class="dim">(framing · arahan visual · cahaya/audio · detik)</span></div>' + (s.shots || []).map(function (sh, j) {
+        var q = p + 'shots.' + j + '.';
+        return '<div class="subrow"><select class="i" data-p="' + q + 'framing"' + dis + '>' + ['EXTREME_WIDE', 'WIDE', 'MEDIUM', 'MEDIUM_CLOSE_UP', 'CLOSE_UP', 'EXTREME_CLOSE_UP', 'POV', 'OVER_SHOULDER', 'INSERT'].map(function (f) { return '<option' + (sh.framing === f ? ' selected' : '') + '>' + f + '</option>'; }).join('') + '</select>' +
+          '<input class="i" data-p="' + q + 'visualDirection" value="' + esc(sh.visualDirection) + '" placeholder="Arahan visual"' + dis + '><input class="i" data-p="' + q + 'lightingAudio" value="' + esc(sh.lightingAudio) + '" placeholder="Cahaya / audio"' + dis + '><input class="i" type="number" min="1" data-p="' + q + 'durationSeconds" data-num="1" value="' + (sh.durationSeconds || 3) + '"' + dis + '>' + (ed ? '<button class="btn sm icon ghost" data-act="rowDel" data-p="' + p + 'shots" data-i="' + j + '">' + ic('x') + '</button>' : '<span></span>') + '</div>';
+      }).join('') + (ed ? '<button class="btn sm ghost mt" data-act="rowAdd" data-p="' + p + 'shots" data-t="shot">' + ic('plus') + 'Shot</button>' : '') +
+      '<div class="small mt"><b>Dialog</b> <span class="dim">(pembicara · emosi · kalimat · detik)</span></div>' + (s.dialogues || []).map(function (dl, j) {
+        var q = p + 'dialogues.' + j + '.';
+        var cps = dl.line ? Math.round(String(dl.line).length / Math.max(1, dl.pacingSeconds)) : 0;
+        return '<div class="dlgrow"><input class="i" list="charList" data-p="' + q + 'speaker" value="' + esc(dl.speaker) + '" placeholder="Pembicara"' + dis + '><input class="i" data-p="' + q + 'emotion" value="' + esc(dl.emotion) + '" placeholder="Emosi"' + dis + '><input class="i" data-p="' + q + 'line" value="' + esc(dl.line) + '" placeholder="Kalimat"' + dis + ' style="' + (cps > 17 ? 'border-color:var(--warn)' : '') + '"><input class="i" type="number" min="1" data-p="' + q + 'pacingSeconds" data-num="1" value="' + (dl.pacingSeconds || 3) + '"' + dis + '>' + (ed ? '<button class="btn sm icon ghost" data-act="rowDel" data-p="' + p + 'dialogues" data-i="' + j + '">' + ic('x') + '</button>' : '<span></span>') + '</div>';
+      }).join('') + (ed ? '<button class="btn sm ghost mt" data-act="rowAdd" data-p="' + p + 'dialogues" data-t="dlg">' + ic('plus') + 'Dialog</button>' : '') + '</div>';
+  }).join('');
+  tb(val1 + tools + dlOpts + '<div class="card col mb"><label class="f">Judul naskah<input class="i" data-p="title" value="' + esc(d.title) + '"' + dis + '></label><label class="f">Cliffhanger penutup<textarea class="i" style="min-height:60px" data-p="hook"' + dis + '>' + esc(d.hook) + '</textarea></label></div>' +
+    (d.scenes.length ? scenes : '<div class="card empty">' + ic('book') + '<br>Naskah kosong. Tambah adegan atau tulis dengan AI.</div>') +
+    (!ed && can('ADMIN,CREATOR') ? '<div class="note mt">Naskah terkunci pada status ' + esc(stLabel(S.ws.episode.status)) + '.</div>' : ''));
+  $$('#tabBody [data-p]').forEach(function (inp) { inp.addEventListener('input', onDraftInput); });
+}
+function getPath(o, p) { return p.split('.').reduce(function (a, k) { return a == null ? a : a[k]; }, o); }
+function setPath(o, p, v) { var ks = p.split('.'), last = ks.pop(), t = ks.reduce(function (a, k) { return a[k]; }, o); t[last] = v; }
+function onDraftInput(e) {
+  var el = e.target, v = el.value;
+  if (el.dataset.arr) v = v.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  if (el.dataset.num) v = Number(v) || 1;
+  setPath(S.draft, el.dataset.p, v);
+  S.draftDirty = true;
+  LS.set('draft_' + S.ws.episode.id, { basedOn: S.ws.script ? S.ws.script.version : 0, d: S.draft, t: Date.now() });
+}
+ACT.scAdd = function () { S.draft.scenes.push({ setting: '', charactersPresent: [], summary: '', shots: [{ framing: 'MEDIUM', visualDirection: '', lightingAudio: '', durationSeconds: 4 }], dialogues: [] }); renderScript(); };
+ACT.scDel = function (el) { S.draft.scenes.splice(+el.dataset.i, 1); renderScript(); };
+ACT.scMove = function (el) { var i = +el.dataset.i, j = i + (+el.dataset.d), a = S.draft.scenes; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; renderScript(); };
+ACT.rowAdd = function (el) { getPath(S.draft, el.dataset.p).push(el.dataset.t === 'shot' ? { framing: 'MEDIUM', visualDirection: '', lightingAudio: '', durationSeconds: 3 } : { speaker: '', emotion: '', line: '', pacingSeconds: 3 }); renderScript(); };
+ACT.rowDel = function (el) { getPath(S.draft, el.dataset.p).splice(+el.dataset.i, 1); renderScript(); };
+ACT.scSave = function () {
+  run(api('script.save', { episodeId: S.ws.episode.id, title: S.draft.title, hook: S.draft.hook, scenes: S.draft.scenes }, { label: 'Simpan naskah' })).then(function (r) {
+    LS.del('draft_' + S.ws.episode.id);
+    if (r.queued) return;
+    toast('Naskah v' + r.version + ' disimpan — ' + r.validation, r.validation === 'INVALID' ? 'bad' : 'ok'); reloadWs();
+  });
+};
+ACT.scAi = function () {
+  modal('Tulis naskah dengan AI (Gemini)', '<div class="col"><div class="note">AI memakai logline, sinopsis, Character Bible, dan episode sebelumnya. Hasil disimpan sebagai versi baru dan tetap wajib direview manusia.</div><label class="f">Arahan tambahan (opsional)<textarea class="i" id="aiIns" placeholder="mis. buka dengan konfrontasi di ruang rapat, akhiri dengan telepon misterius"></textarea></label></div>',
+    '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="scAiGo">' + ic('spark') + 'Buat naskah</button>');
+};
+ACT.scAiGo = function (el) { el.disabled = true; el.textContent = 'Menulis… (±20 dtk)'; run(api('script.aiGenerate', { episodeId: S.ws.episode.id, instructions: val('aiIns') }), 'Naskah AI dibuat').then(function () { closeModal(); LS.del('draft_' + S.ws.episode.id); reloadWs(); }).catch(function () { el.disabled = false; el.textContent = 'Coba lagi'; }); };
+ACT.scDoctor = function () {
+  modal('Script doctor (AI)', '<div class="skel"></div>');
+  api('script.aiDoctor', { episodeId: S.ws.episode.id }).then(function (r) {
+    var sc = r.scores || {};
+    $('#modal .mb').innerHTML = '<div class="row">' + ring(Math.round(r.overall || 0), 'skor') + '<div class="grow">' + Object.keys(sc).map(function (k) { return '<div class="row between small"><span>' + esc(k) + '</span><b>' + sc[k] + '</b></div><div class="bar" style="margin:3px 0 6px"><i style="width:' + sc[k] + '%"></i></div>'; }).join('') + '</div></div>' +
+      '<h3 class="mt">Saran</h3><ul class="small">' + (r.suggestions || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' + ((r.riskFlags || []).length ? '<div class="note bad">⚠ ' + r.riskFlags.map(esc).join('<br>⚠ ') + '</div>' : '<div class="note">Tidak ada tanda risiko hak cipta/tokoh nyata.</div>');
+  }).catch(function (e) { closeModal(); err(e); });
+};
+ACT.scApprove = function (el) {
+  if (el.dataset.d === 'REJECT') return modal('Minta revisi naskah', '<label class="f">Catatan untuk penulis<textarea class="i" id="rvNote"></textarea></label>', '<button class="btn" data-act="closeModal">Batal</button><button class="btn bad" data-act="scRejectGo">Kirim revisi</button>');
+  run(api('script.approve', { episodeId: S.ws.episode.id, decision: 'APPROVE' }), 'Naskah disetujui → Storyboard').then(reloadWs);
+};
+ACT.scRejectGo = function () { run(api('script.approve', { episodeId: S.ws.episode.id, decision: 'REJECT', notes: val('rvNote') }), 'Dikembalikan ke penulis').then(function () { closeModal(); reloadWs(); }); };
+ACT.scExport = function () {
+  var d = S.draft, t = (d.title || S.ws.episode.title).toUpperCase() + '\n' + S.ws.series.title + ' — Episode ' + S.ws.episode.number + '\n\n';
+  d.scenes.forEach(function (s, i) {
+    t += (i + 1) + '. ' + s.setting + '\n' + (s.summary ? s.summary + '\n' : '');
+    (s.shots || []).forEach(function (sh) { t += '   [' + sh.framing + ' · ' + sh.durationSeconds + 's] ' + sh.visualDirection + (sh.lightingAudio ? ' (' + sh.lightingAudio + ')' : '') + '\n'; });
+    (s.dialogues || []).forEach(function (dl) { t += '\n            ' + String(dl.speaker).toUpperCase() + (dl.emotion ? ' (' + dl.emotion + ')' : '') + '\n        ' + dl.line + '\n'; });
+    t += '\n';
+  });
+  t += 'CLIFFHANGER: ' + (d.hook || '-') + '\n';
+  dl('naskah_ep' + S.ws.episode.number + '.txt', t);
+};
+ACT.scDiff = function () {
+  var v = S.ws.versions;
+  modal('Bandingkan versi naskah', '<div class="row"><select class="i grow" id="dfA">' + v.map(function (x, i) { return '<option value="' + x.version + '"' + (i === 1 ? ' selected' : '') + '>v' + x.version + ' · ' + fmtDate(x.createdAt, 1) + '</option>'; }).join('') + '</select>→<select class="i grow" id="dfB">' + v.map(function (x) { return '<option value="' + x.version + '">v' + x.version + (x.approved ? ' ✓' : '') + '</option>'; }).join('') + '</select><button class="btn pri" data-act="scDiffGo">Bandingkan</button></div><div id="dfOut" class="mt"></div>', '', { wide: 1 });
+};
+ACT.scDiffGo = function () {
+  api('script.diff', { episodeId: S.ws.episode.id, base: val('dfA'), target: val('dfB') }).then(function (r) {
+    $('#dfOut').innerHTML = '<div class="note mb">' + esc(r.summary) + '</div>' + r.changes.map(function (c) { return '<div class="card mb"><div class="row"><span class="chip ' + (c.type === 'ADDED' ? 'ok' : c.type === 'REMOVED' ? 'bad' : 'warn') + '">' + c.type + '</span><span class="chip">' + c.entity + '</span><b class="small">' + esc(c.description) + '</b></div>' + (c.before ? '<div class="small mt" style="color:var(--bad)">− ' + esc(c.before) + '</div>' : '') + (c.after ? '<div class="small" style="color:var(--ok)">+ ' + esc(c.after) + '</div>' : '') + '</div>'; }).join('');
+  }).catch(err);
+};
+/** Table read: baca dialog bergantian memakai suara browser (offline, gratis) */
+ACT.tableRead = function () {
+  if (!window.speechSynthesis) return toast('Browser tidak mendukung text-to-speech', 'bad');
+  if (speechSynthesis.speaking) { speechSynthesis.cancel(); return toast('Table read dihentikan'); }
+  var lines = []; S.draft.scenes.forEach(function (s) { (s.dialogues || []).forEach(function (d) { if (d.line) lines.push(d); }); });
+  if (!lines.length) return toast('Belum ada dialog', 'bad');
+  var voices = speechSynthesis.getVoices().filter(function (v) { return /^id|^ms/i.test(v.lang); });
+  lines.forEach(function (d) {
+    var u = new SpeechSynthesisUtterance(d.line), h = hashHue(d.speaker);
+    u.lang = (S.ws.series.language || 'id') === 'id' ? 'id-ID' : S.ws.series.language; if (voices.length) u.voice = voices[h % voices.length];
+    u.pitch = 0.7 + (h % 60) / 100; u.rate = 1.02;
+    u.onstart = function () { toast('🎙 ' + d.speaker + ': ' + d.line); };
+    speechSynthesis.speak(u);
+  });
+  toast('Table read dimulai — klik lagi untuk berhenti');
+};
+
+/* ===== Storyboard ===== */
+TABS.board = function (w) {
+  var fr = w.frames, ap = fr.filter(function (f) { return f.status === 'APPROVED'; }).length;
+  var canGen = can('ADMIN,CREATOR') && w.episode.status === 'STORYBOARD_READY' && w.script && w.script.approved;
+  tb('<div class="row between mb"><div class="small muted">' + fr.length + ' frame · ' + ap + ' disetujui · ' + fr.filter(function (f) { return f.status === 'FLAGGED_FOR_RETAKE'; }).length + ' retake</div><div class="row">' +
+    (canGen ? '<button class="btn pri" data-act="sbGen">' + ic('layers') + (fr.length ? 'Tambah shot baru dari naskah' : 'Buat storyboard dari naskah') + '</button>' + (fr.length ? '<button class="btn" data-act="sbGen" data-r="1">Bangun ulang</button>' : '') : '') + '</div></div>' +
+    (!w.script || !w.script.approved ? '<div class="note warn mb">Storyboard dibuat dari naskah yang sudah disetujui reviewer.</div>' : '') +
+    '<div class="bar mb"><i style="width:' + (fr.length ? ap / fr.length * 100 : 0) + '%"></i></div>' +
+    (fr.length ? '<div class="frames">' + fr.map(frameCard).join('') + '</div>' : '<div class="card empty">' + ic('layers') + '<br>Belum ada frame.</div>'));
+};
+function frameCard(f) {
+  var stc = { APPROVED: 'ok', FLAGGED_FOR_RETAKE: 'warn', REJECTED: 'bad', GENERATED: 'info' }[f.status];
+  return '<div class="frame"><div class="img" data-act="zoomImg" data-src="' + esc(f.imageUrl) + '">' + (f.imageUrl ? '<img loading="lazy" src="' + esc(f.imageUrl) + '" alt="">' : '<span class="p">' + esc(f.prompt) + '</span>') + '</div><div class="meta"><div class="row between"><b>S' + f.sceneNo + '·' + f.shotNo + '</b><span class="chip ' + stc + '">' + esc(f.status.replace(/_/g, ' ')) + '</span></div>' +
+    '<span class="tiny dim">' + esc(f.framing) + ' · ' + f.durationSec + 's · ' + esc(f.license) + '</span>' + (f.dialogue ? '<span class="tiny clamp2">“' + esc(f.dialogue) + '”</span>' : '') + (f.notes ? '<span class="tiny" style="color:var(--warn)">📝 ' + esc(f.notes) + '</span>' : '') +
+    '<div class="row" style="gap:4px">' + (can('ADMIN,REVIEWER') ? '<button class="btn sm icon ok" title="Setujui" data-act="frSet" data-id="' + f.id + '" data-s="APPROVED">' + ic('check') + '</button><button class="btn sm icon" title="Minta retake" data-act="frRetake" data-id="' + f.id + '">↻</button>' : '') +
+    '<button class="btn sm icon" title="Detail" data-act="frEdit" data-id="' + f.id + '">' + ic('edit') + '</button></div></div></div>';
+}
+ACT.sbGen = function (el) { run(api('storyboard.generate', { episodeId: S.ws.episode.id, replace: !!el.dataset.r }), 'Storyboard dibuat').then(reloadWs); };
+ACT.frSet = function (el) { run(api('storyboard.update', { id: el.dataset.id, status: el.dataset.s }), 'Frame ' + el.dataset.s.toLowerCase()).then(function (f) { if (f && f.id) { replaceFrame(f); } }); };
+function replaceFrame(f) { S.ws.frames = S.ws.frames.map(function (x) { return x.id === f.id ? f : x; }); TABS.board(S.ws); }
+ACT.frRetake = function (el) { modal('Minta retake', '<label class="f">Catatan untuk kreator<textarea class="i" id="frN"></textarea></label>', '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="frRetakeGo" data-id="' + el.dataset.id + '">Kirim</button>'); };
+ACT.frRetakeGo = function (el) { run(api('storyboard.update', { id: el.dataset.id, status: 'FLAGGED_FOR_RETAKE', notes: val('frN') }), 'Retake diminta').then(function (f) { closeModal(); if (f.id) replaceFrame(f); }); };
+ACT.frEdit = function (el) {
+  var f = S.ws.frames.filter(function (x) { return x.id === el.dataset.id; })[0], cr = can('ADMIN,CREATOR');
+  modal('Frame S' + f.sceneNo + '·' + f.shotNo, '<div class="grid g2"><div class="frame"><div class="img" data-act="zoomImg" data-src="' + esc(f.imageUrl) + '">' + (f.imageUrl ? '<img src="' + esc(f.imageUrl) + '">' : '<span class="p">Belum ada gambar</span>') + '</div></div><div class="col">' +
+    '<label class="f">Prompt gambar<textarea class="i" id="frP" style="min-height:150px"' + (cr ? '' : ' disabled') + '>' + esc(f.prompt) + '</textarea></label><button class="btn sm" data-act="copy" data-from="#frP">Salin prompt</button>' +
+    '<label class="f">Status lisensi<select class="i" id="frL"' + (cr ? '' : ' disabled') + '>' + ['SYNTHETIC_CLEAN', 'COMMERCIAL_LICENSED', 'CONSENT_VERIFIED', 'UNVERIFIED'].map(function (l) { return '<option' + (f.license === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">Catatan<textarea class="i" id="frNo">' + esc(f.notes) + '</textarea></label><div class="tiny dim">Provider: ' + esc(f.provider) + ' · v' + f.version + ' · biaya ' + usd(f.costUsd) + ' · checksum <span class="mono">' + esc(f.checksum) + '</span></div></div></div>',
+    (cr ? '<button class="btn" data-act="frUp" data-id="' + f.id + '">' + ic('up') + 'Unggah gambar</button><button class="btn" data-act="frAi" data-id="' + f.id + '">' + ic('spark') + 'Gambar AI</button>' : '') + '<button class="btn pri" data-act="frSave" data-id="' + f.id + '">Simpan</button>', { wide: 1 });
+};
+ACT.frSave = function (el) { var d = { id: el.dataset.id, notes: val('frNo') }; if (can('ADMIN,CREATOR')) { d.prompt = val('frP'); d.license = val('frL'); } run(api('storyboard.update', d), 'Frame disimpan').then(function (f) { closeModal(); if (f.id) replaceFrame(f); }); };
+ACT.frUp = function (el) { uploadFlow('image', { max: 1080, maxH: 1920 }).then(function (r) { if (r) run(api('storyboard.update', { id: el.dataset.id, imageUrl: r.url, provider: 'upload', license: val('frL') }), 'Gambar dipasang').then(function (f) { closeModal(); replaceFrame(f); }); }); };
+ACT.frAi = function (el) { el.disabled = true; el.textContent = 'Membuat…'; run(api('storyboard.update', { id: el.dataset.id, aiImage: true }, { noQueue: true }), 'Gambar AI dibuat').then(function (f) { closeModal(); replaceFrame(f); }).catch(function () { el.disabled = false; el.textContent = 'Gambar AI'; }); };
+
+/* ===== Audio & subtitle ===== */
+TABS.audio = function (w, rebuild) {
+  api('assembly.get', { episodeId: w.episode.id, rebuild: !!rebuild }).then(function (r) {
+    S.asm = r;
+    var a = r.assembly, g = r.gate, cr = can('ADMIN,CREATOR');
+    var gate = ['resolution', 'duration', 'loudness', 'safeArea', 'hook'].map(function (k) {
+      var x = g[k], st = x.passed ? 'PASSED' : x.pending ? 'WARNING' : 'FAILED';
+      return '<div class="chk"><span class="ic ' + st + '">' + (x.passed ? '✓' : x.pending ? '!' : '✗') + '</span><div class="grow small"><b>' + { resolution: 'Resolusi 9:16', duration: 'Durasi', loudness: 'Loudness', safeArea: 'Area aman teks', hook: 'Skor hook' }[k] + '</b><div class="dim tiny">' + esc(x.value === null ? 'belum diukur' : x.value) + ' · target ' + esc(x.expected) + '</div></div></div>';
+    }).join('');
+    tb((r.stale ? '<div class="note warn mb">Naskah berubah sejak assembly dibuat. <a href="#" data-act="asmRebuild">Bangun ulang dari naskah terbaru</a> (timing subtitle akan direset).</div>' : '') +
+      '<div class="grid g3"><div class="card pad0"><div style="padding:14px 14px 0" class="row between"><h3>' + ic('shield') + 'Quality gate</h3><span class="chip ' + (g.overall === 'COMPLIANT' ? 'ok' : 'warn') + '">' + g.overall + '</span></div>' + gate + '</div>' +
+      '<div class="card col"><h3>' + ic('vol') + 'Mixing</h3><div class="grid g2"><label class="f">Loudness terukur (LUFS)<input class="i" type="number" step="0.1" id="asLufs" value="' + (a.measuredLufs === null ? '' : a.measuredLufs) + '" placeholder="-14"' + (cr ? '' : ' disabled') + '></label><label class="f">Resolusi master<select class="i" id="asRes"' + (cr ? '' : ' disabled') + '>' + ['1080x1920', '720x1280', '2160x3840'].map(function (x) { return '<option' + (a.resolution === x ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label></div>' +
+      '<div class="tiny dim">Ukur dengan: <span class="mono">ffmpeg -i master.mp4 -af loudnorm=print_format=summary -f null -</span></div><div class="small"><b>Musik & SFX</b> <span class="dim">(wajib nomor lisensi)</span></div><div id="musicRows">' + a.music.map(musicRow).join('') + '</div>' + (cr ? '<button class="btn sm ghost" data-act="musAdd">' + ic('plus') + 'Trek</button>' : '') + '</div>' +
+      '<div class="card col"><h3>' + ic('down') + 'Ekspor subtitle</h3><div class="row"><button class="btn" data-act="dlSub" data-f="srt">SRT</button><button class="btn" data-act="dlSub" data-f="vtt">VTT</button><button class="btn" data-act="copy" data-text="' + esc(r.srt) + '">Salin SRT</button></div><div class="code">' + esc(r.srt.slice(0, 1200)) + '</div></div></div>' +
+      '<div class="card mt pad0"><div style="padding:14px" class="row between"><h3 style="margin:0">' + ic('mic') + 'Voice-over per dialog (' + a.voices.length + ')</h3><span class="tiny dim">▶ = pratinjau TTS browser · unggah = rekaman/TTS final</span></div><div class="tbl"><table class="t resp"><thead><tr><th>Waktu</th><th>Pembicara</th><th>Kalimat</th><th>Audio</th><th></th></tr></thead><tbody>' +
+      a.voices.map(function (v) { return '<tr><td data-l="Waktu" class="mono tiny">' + v.startSec + '–' + v.endSec + 's</td><td data-l="Pembicara"><b>' + esc(v.speaker) + '</b><div class="tiny dim">' + esc(v.emotion) + '</div></td><td data-l="Kalimat">' + esc(v.line) + '</td><td data-l="Audio">' + (v.audioUrl ? '<audio controls preload="none" src="' + esc(v.audioUrl) + '" style="height:32px;max-width:180px"></audio>' : '<span class="chip">' + esc(v.status) + '</span>') + '</td><td><div class="row nw"><button class="btn sm icon" data-act="ttsOne" data-t="' + esc(v.line) + '" data-s="' + esc(v.speaker) + '">' + ic('play') + '</button>' + (cr ? '<button class="btn sm icon" data-act="voUp" data-id="' + v.id + '">' + ic('up') + '</button>' : '') + '</div></td></tr>'; }).join('') + '</tbody></table></div></div>' +
+      '<div class="card mt"><div class="row between mb"><h3 style="margin:0">' + ic('list') + 'Editor subtitle</h3>' + (cr ? '<div class="row"><button class="btn sm" data-act="subAdd">' + ic('plus') + 'Cue</button><button class="btn sm pri" data-act="asmSave">Simpan assembly</button></div>' : '') + '</div><div id="subRows">' + a.subtitles.map(subRow).join('') + '</div></div>');
+  }).catch(err);
+};
+function musicRow(m, i) { var d = can('ADMIN,CREATOR') ? '' : ' disabled'; return '<div class="grid g2 mus" style="gap:6px;border-top:1px solid var(--line);padding-top:8px"><input class="i" data-k="title" value="' + esc(m.title) + '" placeholder="Judul trek"' + d + '><input class="i" data-k="licenseRef" value="' + esc(m.licenseRef) + '" placeholder="No. lisensi / sumber"' + d + '><select class="i" data-k="category"' + d + '><option' + (m.category === 'BGM' ? ' selected' : '') + '>BGM</option><option' + (m.category === 'SFX' ? ' selected' : '') + '>SFX</option></select><input class="i" type="number" data-k="volumePct" value="' + m.volumePct + '" placeholder="Volume %"' + d + '></div>'; }
+function subRow(s) { var d = can('ADMIN,CREATOR') ? '' : ' disabled'; return '<div class="sub row nw" style="gap:6px;margin-top:6px"><input class="i" style="width:76px" type="number" step="0.1" data-k="startSec" value="' + s.startSec + '"' + d + '><input class="i" style="width:76px" type="number" step="0.1" data-k="endSec" value="' + s.endSec + '"' + d + '><input class="i hide-m" style="width:110px" data-k="speaker" value="' + esc(s.speaker) + '"' + d + '><input class="i grow" data-k="text" value="' + esc(s.text) + '"' + d + '>' + (d ? '' : '<button class="btn sm icon ghost" data-act="subDel">' + ic('x') + '</button>') + '</div>'; }
+ACT.asmRebuild = function () { TABS.audio(S.ws, true); };
+ACT.musAdd = function () { $('#musicRows').insertAdjacentHTML('beforeend', musicRow({ title: '', licenseRef: '', category: 'SFX', volumePct: 60 })); };
+ACT.subAdd = function () { var last = S.asm.assembly.subtitles.slice(-1)[0] || { endSec: 0 }; $('#subRows').insertAdjacentHTML('beforeend', subRow({ startSec: last.endSec + 0.2, endSec: last.endSec + 3, speaker: '', text: '' })); };
+ACT.subDel = function (el) { el.closest('.sub').remove(); };
+ACT.asmSave = function () {
+  var subs = $$('#subRows .sub').map(function (r) { var o = {}; $$('[data-k]', r).forEach(function (i) { o[i.dataset.k] = i.type === 'number' ? Number(i.value) : i.value; }); return o; });
+  var music = $$('#musicRows .mus').map(function (r) { var o = { durationSec: S.asm.assembly.totalSec, startSec: 0 }; $$('[data-k]', r).forEach(function (i) { o[i.dataset.k] = i.type === 'number' ? Number(i.value) : i.value; }); return o; }).filter(function (m) { return m.title; });
+  run(api('assembly.save', { episodeId: S.ws.episode.id, subtitles: subs, music: music, measuredLufs: val('asLufs'), resolution: val('asRes') }, { label: 'Simpan assembly' }), 'Assembly disimpan').then(function (r) { if (!r.queued) TABS.audio(S.ws); });
+};
+ACT.dlSub = function (el) { dl('subtitle_ep' + S.ws.episode.number + '.' + el.dataset.f, el.dataset.f === 'srt' ? S.asm.srt : S.asm.vtt); };
+ACT.ttsOne = function (el) { if (!window.speechSynthesis) return; speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(el.dataset.t); u.lang = 'id-ID'; u.pitch = 0.7 + (hashHue(el.dataset.s) % 60) / 100; speechSynthesis.speak(u); };
+ACT.voUp = function (el) { uploadFlow('audio').then(function (r) { if (r) run(api('assembly.save', { episodeId: S.ws.episode.id, voices: [{ id: el.dataset.id, audioUrl: r.url }] }), 'Audio dipasang').then(function () { TABS.audio(S.ws); }); }); };
+
+/* ===== QC ===== */
+TABS.qc = function (w) {
+  var q = w.qc, rep = q && q.report, so = q && q.signOff, rv = can('ADMIN,REVIEWER');
+  var checks = rep ? rep.checks.map(function (c) { return '<div class="chk"><span class="ic ' + c.status + '">' + (c.status === 'PASSED' ? '✓' : c.status === 'WARNING' ? '!' : '✗') + '</span><div class="grow"><div class="row between"><b class="small">' + esc(c.title) + '</b><span class="chip ' + (c.severity === 'CRITICAL' ? 'bad' : c.severity === 'WARNING' ? 'warn' : 'info') + '">' + c.severity + '</span></div><div class="tiny dim">Terukur: ' + esc(c.measuredValue) + ' · Standar: ' + esc(c.expectedBenchmark) + '</div>' + (c.recommendation ? '<div class="tiny" style="color:var(--warn)">→ ' + esc(c.recommendation) + '</div>' : '') + '</div></div>'; }).join('') : '';
+  var ck = [['visual', 'Visual: tidak ada artefak, wajah konsisten, frame hitam'], ['audio', 'Audio: loudness, tidak clipping, dialog jelas'], ['subtitle', 'Subtitle sinkron & terbaca di ponsel'], ['legal', 'Legal: consent wajah/suara, lisensi musik & aset, bukan tiruan IP lain'], ['cliffhanger', 'Cliffhanger kuat & tidak menyesatkan']];
+  tb('<div class="grid g3"><div class="card col" style="align-items:center;text-align:center">' + (rep ? ring(rep.overallScore, rep.overallStatus) + '<div class="small">' + rep.passedChecks + ' lulus · ' + rep.warningChecks + ' peringatan · ' + rep.failedChecks + ' gagal</div><div class="tiny dim">Dipindai ' + fmtDate(rep.scannedAt, 1) + ' oleh ' + esc(rep.scannedBy) + '</div>' : '<div class="empty">' + ic('shield') + '<br>Belum dipindai</div>') +
+    '<button class="btn pri" data-act="qcScan">' + ic('refresh') + 'Pindai QC</button></div>' +
+    '<div class="card pad0" style="grid-column:span 2">' + (checks || '<div class="empty">Jalankan pemindaian untuk melihat 10 pemeriksaan otomatis.</div>') + '</div></div>' +
+    '<div class="card mt"><h3>' + ic('check') + 'Sign-off reviewer</h3>' + (so ? '<div class="note ' + (so.decision === 'APPROVED_FOR_RELEASE' ? '' : 'warn') + ' mb"><b>' + (so.decision === 'APPROVED_FOR_RELEASE' ? '✅ Disetujui tayang' : '↩ Revisi diminta') + '</b> oleh ' + esc(so.reviewerName || so.reviewer) + ' · ' + fmtDate(so.at, 1) + (so.notes ? '<br>' + esc(so.notes) : '') + '</div>' : '') +
+    (rv && w.episode.status === 'QC_PENDING' ? ck.map(function (c) { return '<label class="check"><input type="checkbox" id="ck_' + c[0] + '"><span>' + c[1] + '</span></label>'; }).join('') + '<label class="f mt">Catatan<textarea class="i" id="soNote"></textarea></label><label class="check"><input type="checkbox" id="soPub" checked><span>Langsung tayangkan setelah disetujui</span></label><div class="row mt"><button class="btn ok" data-act="qcSign" data-d="APPROVED_FOR_RELEASE">' + ic('check') + 'Setujui tayang</button><button class="btn bad" data-act="qcSign" data-d="REVISION_REQUESTED">Minta revisi</button></div>'
+      : '<div class="small dim">' + (rv ? 'Sign-off tersedia saat episode berstatus Menunggu QC.' : 'Sign-off dilakukan oleh Reviewer/Admin.') + '</div>') + '</div>');
+};
+ACT.qcScan = function () { run(api('qc.scan', { episodeId: S.ws.episode.id }), 'QC dipindai').then(function (q) { S.ws.qc = q; TABS.qc(S.ws); }); };
+ACT.qcSign = function (el) {
+  var cl = {}; ['visual', 'audio', 'subtitle', 'legal', 'cliffhanger'].forEach(function (k) { cl[k] = val('ck_' + k); });
+  run(api('qc.signoff', { episodeId: S.ws.episode.id, decision: el.dataset.d, checklist: cl, notes: val('soNote'), publish: val('soPub') }, { noQueue: true }), el.dataset.d === 'APPROVED_FOR_RELEASE' ? 'Disetujui 🎉' : 'Revisi dikirim').then(reloadWs);
+};
+
+/* ===== Kolaborasi ===== */
+TABS.collab = function (w) {
+  var cs = w.comments.slice().sort(function (a, b) { return a.tsSec - b.tsSec; });
+  tb('<div class="grid g2"><div class="card"><h3>' + ic('users') + 'Komentar ber-timestamp</h3><div class="row nw"><input class="i" style="width:84px" id="cmTs" type="number" min="0" step="0.5" placeholder="dtk"><input class="i grow" id="cmTx" placeholder="Tulis catatan review…"><button class="btn pri icon" data-act="cmAdd">' + ic('plus') + '</button></div><div class="mt">' +
+    (cs.length ? cs.map(function (c) { return '<div class="cmt ' + (c.resolved ? 'res' : '') + '">' + avatarHtml({ name: c.userName }) + '<div class="grow"><div class="row small"><b>' + esc(c.userName) + '</b><span class="chip">' + esc(c.role) + '</span><span class="ts">' + secFmt(c.tsSec) + '</span><span class="tiny dim">' + ago(c.createdAt) + '</span></div><div class="small" style="margin-top:3px">' + esc(c.text) + '</div>' + (c.resolved ? '<div class="tiny dim">✓ diselesaikan ' + esc(c.resolvedBy) + '</div>' : '') + '</div><button class="btn sm" data-act="cmRes" data-id="' + c.id + '">' + (c.resolved ? 'Buka' : '✓') + '</button></div>'; }).join('') : '<div class="empty">Belum ada komentar</div>') + '</div></div>' +
+    '<div class="card col"><h3>' + ic('down') + 'Paket produksi & sertifikat</h3><p class="small muted">Manifest JSON berisi naskah tersetujui, storyboard + provenans & checksum, daftar consent karakter, lisensi musik, subtitle SRT, dan hasil QC — untuk diserahkan ke mitra distribusi/arsip legal.</p><div class="row"><button class="btn pri" data-act="bundle">Unduh JSON</button><button class="btn" data-act="bundle" data-drive="1">Simpan ke Drive</button></div><div id="bndOut"></div></div></div>');
+};
+ACT.cmAdd = function () { var t = val('cmTx'); if (!t) return; run(api('comment.add', { episodeId: S.ws.episode.id, tsSec: num('cmTs'), text: t }), 'Komentar ditambahkan').then(function (c) { if (c.id) { S.ws.comments.push(c); TABS.collab(S.ws); } }); };
+ACT.cmRes = function (el) { run(api('comment.resolve', { id: el.dataset.id })).then(function (c) { if (c.id) { S.ws.comments = S.ws.comments.map(function (x) { return x.id === c.id ? c : x; }); TABS.collab(S.ws); } }); };
+ACT.bundle = function (el) {
+  run(api('bundle.export', { episodeId: S.ws.episode.id, toDrive: !!el.dataset.drive })).then(function (b) {
+    $('#bndOut').innerHTML = '<div class="note mt"><b>' + esc(b.certificate.bundleId) + '</b> · ' + b.certificate.licenseItems + ' item lisensi · disertifikasi: ' + esc(b.certificate.certifiedBy) + '<br><span class="mono tiny">SHA-256 ' + esc(b.checksum) + '</span>' + (b.driveUrl ? '<br><a href="' + esc(b.driveUrl) + '" target="_blank" rel="noopener">Buka di Drive</a>' : '') + '</div>';
+    if (!el.dataset.drive) dl(b.certificate.bundleId + '.json', JSON.stringify(b, null, 2), 'application/json');
+  });
+};
+
+/* ===== Lokalisasi ===== */
+TABS.loc = function (w) {
+  api('dub.list', { episodeId: w.episode.id }).then(function (r) {
+    S.dubs = r.tracks;
+    var opts = Object.keys(r.langs).map(function (k) { return '<option value="' + k + '">' + esc(r.langs[k]) + ' (' + k + ')</option>'; }).join('');
+    tb('<div class="card col mb" style="max-width:640px"><h3>' + ic('globe') + 'Terjemahkan subtitle</h3><div class="grid g2"><label class="f">Bahasa tujuan<select class="i" id="dbL">' + opts + '</select></label><label class="f">Mesin<select class="i" id="dbE"><option value="LT">Google Translate bawaan (gratis)</option><option value="AI">Gemini (lebih natural, berbayar)</option></select></label></div><button class="btn pri" data-act="dbGo">Terjemahkan</button><div class="tiny dim">Subtitle sumber diambil dari menu Audio & Subtitle. Terjemahan otomatis tetap perlu dicek penutur asli sebelum rilis.</div></div>' +
+      '<div class="grid gauto">' + (r.tracks.length ? r.tracks.map(function (t) { return '<div class="card"><div class="row between"><b>' + esc(r.langs[t.lang] || t.lang) + '</b><span class="chip ok">' + t.subtitles.length + ' cue</span></div><div class="code mt" style="max-height:140px">' + t.subtitles.slice(0, 6).map(function (s) { return esc(s.text); }).join('\n') + '</div><div class="row mt"><button class="btn sm" data-act="dbDl" data-l="' + t.lang + '">SRT</button><span class="tiny dim">' + ago(t.updatedAt) + '</span></div></div>'; }).join('') : '<div class="card empty">Belum ada terjemahan</div>') + '</div>');
+  }).catch(err);
+};
+ACT.dbGo = function (el) { el.disabled = true; run(api('dub.translate', { episodeId: S.ws.episode.id, lang: val('dbL'), engine: val('dbE') === 'AI' ? 'AI' : '' }), 'Terjemahan siap').then(function () { TABS.loc(S.ws); }).catch(function () { el.disabled = false; }); };
+ACT.dbDl = function (el) {
+  var t = S.dubs.filter(function (x) { return x.lang === el.dataset.l; })[0]; if (!t) return;
+  function f(s) { var ms = Math.round((s % 1) * 1000), x = Math.floor(s); return ('0' + Math.floor(x / 3600)).slice(-2) + ':' + ('0' + Math.floor(x % 3600 / 60)).slice(-2) + ':' + ('0' + x % 60).slice(-2) + ',' + ('00' + ms).slice(-3); }
+  dl('subtitle_ep' + S.ws.episode.number + '_' + t.lang + '.srt', t.subtitles.map(function (s, i) { return (i + 1) + '\n' + f(s.startSec) + ' --> ' + f(s.endSec) + '\n' + s.text + '\n'; }).join('\n'));
+};
+
+/* ===== Retensi & hook A/B ===== */
+TABS.growth = function (w) {
+  Promise.all([api('retention.get', { episodeId: w.episode.id }), api('hooks.list', { episodeId: w.episode.id })]).then(function (r) {
+    var rt = r[0], hs = r[1], cr = can('ADMIN,CREATOR'), dur = w.episode.durationSec || 1;
+    var chart = lineChart(rt.curve.map(function (c) { return { x: c.pct, y: c.retention, t: c.sec + ' dtk: ' + c.retention + '%' }; }), { marks: rt.sceneMarks.map(function (m) { return { x: Math.min(100, m.sec / dur * 100), label: m.label.split(':')[0] }; }), xl: rt.curve.filter(function (c, i) { return i % 2 === 0; }).map(function (c) { return { x: c.pct, t: secFmt(c.sec) }; }) });
+    var rc = { EXCELLENT: 'ok', STRONG: 'info', AT_RISK: 'bad', NO_DATA: '' }[rt.rating];
+    tb('<div class="grid g4 keep2 mb"><div class="card kpi"><span class="l">Penonton</span><span class="v">' + rt.viewers + '</span></div><div class="card kpi"><span class="l">Rata-rata tonton</span><span class="v">' + rt.stats.avgWatchPct + '%</span></div><div class="card kpi"><span class="l">Selesai ≥90%</span><span class="v">' + rt.stats.completionPct + '%</span></div><div class="card kpi"><span class="l">Rating</span><span class="v"><span class="chip ' + rc + '" style="font-size:.8rem">' + rt.rating + '</span></span></div></div>' +
+      '<div class="card mb"><div class="row between"><h3 style="margin:0">' + ic('trend') + 'Kurva retensi (data nyata pemutar)</h3>' + (rt.worstDrop && rt.viewers ? '<span class="chip warn">Penurunan terbesar −' + rt.worstDrop.drop + '% @ ' + secFmt(rt.worstDrop.at) + '</span>' : '') + '</div>' + (rt.viewers ? chart : '<div class="empty">Belum ada data tontonan. Kurva terisi otomatis saat episode ditonton di pemutar 9:16.</div>') + '</div>' +
+      '<div class="card"><div class="row between mb"><h3 style="margin:0">' + ic('spark') + 'A/B test cliffhanger</h3>' + (cr ? '<div class="row"><button class="btn sm" data-act="hkAdd">' + ic('plus') + 'Manual</button><button class="btn sm pri" data-act="hkGen">' + ic('spark') + '3 varian AI</button></div>' : '') + '</div>' +
+      '<div class="note mb small">Varian ditampilkan acak sesuai alokasi trafik sebagai kartu cliffhanger di akhir episode. "Lanjut %" = penonton yang menekan Episode berikutnya setelah melihat kartu.</div>' +
+      (hs.length ? hs.map(function (h) { return '<div class="li" style="padding-left:0;padding-right:0"><span class="chip ' + (h.winning ? 'ok' : 'acc') + '">' + esc(h.code) + (h.winning ? ' 🏆' : '') + '</span><div class="grow"><div class="small">' + esc(h.text) + '</div><div class="tiny dim">trafik ' + h.traffic + '% · ' + h.views + ' tayang · lanjut ' + h.continuePct + '% · skor ' + h.score + ' · ' + esc(h.model) + '</div></div>' + (cr ? '<div class="row nw"><button class="btn sm" data-act="hkWin" data-id="' + h.id + '">Pemenang</button><button class="btn sm icon ghost bad" data-act="hkDel" data-id="' + h.id + '">' + ic('trash') + '</button></div>' : '') + '</div>'; }).join('') : '<div class="empty">Belum ada varian</div>') + '</div>');
+  }).catch(err);
+};
+ACT.hkGen = function (el) { el.disabled = true; run(api('hooks.generate', { episodeId: S.ws.episode.id }), 'Varian dibuat').then(function () { TABS.growth(S.ws); }).catch(function () { el.disabled = false; }); };
+ACT.hkAdd = function () { modal('Varian hook manual', '<label class="f">Teks cliffhanger<textarea class="i" id="hkT"></textarea></label><label class="f mt">Alokasi trafik %<input class="i" type="number" id="hkTr" value="50"></label>', '<button class="btn pri" data-act="hkAddGo">Simpan</button>'); };
+ACT.hkAddGo = function () { run(api('hooks.save', { episodeId: S.ws.episode.id, text: val('hkT'), traffic: num('hkTr') }), 'Varian ditambahkan').then(function () { closeModal(); TABS.growth(S.ws); }); };
+ACT.hkWin = function (el) { run(api('hooks.save', { episodeId: S.ws.episode.id, promoteId: el.dataset.id }), 'Pemenang ditetapkan → hook episode diperbarui').then(function () { TABS.growth(S.ws); }); };
+ACT.hkDel = function (el) { run(api('hooks.save', { episodeId: S.ws.episode.id, deleteId: el.dataset.id })).then(function () { TABS.growth(S.ws); }); };
+
+/* ===== Sindikasi ===== */
+TABS.synd = function (w) {
+  api('syndication.list', { episodeId: w.episode.id }).then(function (r) {
+    tb('<div class="card col mb" style="max-width:640px"><h3>' + ic('share') + 'Buat paket ekspor</h3><label class="f">Tujuan<select class="i" id="syP">' + Object.keys(r.presets).map(function (k) { return '<option value="' + k + '">' + esc(r.presets[k].name) + '</option>'; }).join('') + '</select></label><button class="btn pri" data-act="syGo">Buat paket</button>' +
+      '<div class="tiny dim">Nama platform hanya sebagai referensi spesifikasi teknis; CineAI tidak berafiliasi dengan platform mana pun. Unggah dilakukan manual melalui akun resmi Anda.</div></div>' +
+      (r.packages.map(function (p) { return '<div class="card mb"><div class="row between"><b>' + esc(p.preset.spec.name) + '</b><span class="chip ' + (p.status === 'READY' ? 'ok' : 'warn') + '">' + p.status + '</span></div><div class="row small mt">' + p.preset.checks.map(function (c) { return '<span class="chip ' + (c.ok ? 'ok' : 'bad') + '">' + (c.ok ? '✓ ' : '✗ ') + esc(c.item) + '</span>'; }).join('') + '</div><div class="small muted mt">' + esc(p.preset.spec.note) + '</div><div class="code mt">' + esc(p.preset.ffmpeg) + '</div><div class="row mt"><button class="btn sm" data-act="copy" data-text="' + esc(p.preset.ffmpeg) + '">Salin perintah ffmpeg</button><button class="btn sm" data-act="copy" data-text="' + esc(p.preset.caption) + '">Salin caption</button><span class="tiny dim">' + fmtDate(p.createdAt, 1) + '</span></div></div>'; }).join('') || '<div class="card empty">Belum ada paket</div>'));
+  }).catch(err);
+};
+ACT.syGo = function () { run(api('syndication.create', { episodeId: S.ws.episode.id, platform: val('syP') }, { noQueue: true }), 'Paket dibuat').then(function () { TABS.synd(S.ws); }); };
+
+/* ---------------- Penonton: katalog, pemutar 9:16, dompet ---------------- */
+on('/watch', function () {
+  skel(2);
+  api('catalog.list', {}).then(function (cat) {
+    S.catalog = cat;
+    var hist = LS.get('hist', {}), recent = Object.keys(hist).map(function (k) { return hist[k]; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 8);
+    var genres = {}; cat.forEach(function (s) { genres[s.genre] = 1; });
+    view(pageHead('Tonton', 'Drama vertikal orisinal · geser ke atas untuk episode berikutnya', S.user ? '<a href="#/wallet" class="btn sm"><span class="coin">🪙</span>Dompet</a>' : '<a class="btn sm pri" href="#/login">Masuk</a>') +
+      (recent.length ? '<h3>' + ic('clock') + 'Lanjutkan menonton</h3><div class="row nw mb" style="overflow-x:auto;padding-bottom:6px">' + recent.map(function (h) { return '<a href="#/w/' + h.id + '" class="cover" style="width:118px;flex:0 0 118px;text-decoration:none">' + imgOr(h.thumb, h.sid, h.st) + '<div class="ov"><b class="tiny">' + esc(h.st) + '</b><span class="tiny">EP ' + h.n + '</span><div class="bar" style="height:3px;margin-top:4px"><i style="width:' + h.pct + '%"></i></div></div></a>'; }).join('') + '</div>' : '') +
+      '<div class="row mb"><input class="i grow" id="wq" placeholder="Cari judul, tag…" style="max-width:360px"><div class="row" id="wg"><button class="chip acc" data-act="wGenre" data-g="">Semua</button>' + Object.keys(genres).map(function (g) { return '<button class="chip" data-act="wGenre" data-g="' + g + '">' + esc(GENRES[g] || g) + '</button>'; }).join('') + '</div></div>' +
+      '<div id="wGrid"></div>');
+    var draw = function (g) {
+      var q = val('wq').toLowerCase();
+      var list = cat.filter(function (s) { return (!g || s.genre === g) && (!q || (s.title + ' ' + s.tags + ' ' + s.logline).toLowerCase().indexOf(q) >= 0); });
+      $('#wGrid').innerHTML = list.length ? '<div class="grid gcards">' + list.map(function (s) {
+        return '<a href="#/watch/' + s.id + '" class="cover" style="text-decoration:none">' + imgOr(s.coverUrl, s.id, s.title) + '<span class="tagx chip acc">' + s.episodes.length + ' ep</span><div class="ov"><b>' + esc(s.title) + '</b><span class="tiny" style="opacity:.85">' + esc(GENRES[s.genre] || s.genre) + ' · ' + fmtN(s.views) + ' tayang</span></div></a>';
+      }).join('') + '</div>' : '<div class="card empty">' + ic('film') + '<br>' + (cat.length ? 'Tidak ada yang cocok' : 'Belum ada episode yang tayang.') + '</div>';
+    };
+    S.wDraw = draw; draw('');
+    $('#wq').addEventListener('input', function () { draw(S.wG || ''); });
+  }).catch(err);
+});
+ACT.wGenre = function (el) { S.wG = el.dataset.g; $$('#wg .chip').forEach(function (c) { c.classList.toggle('acc', c === el); }); S.wDraw(S.wG); };
+
+on('/watch/:sid', function (sid) {
+  var go2 = function (cat) {
+    var s = cat.filter(function (x) { return x.id === sid; })[0]; if (!s) return view('<div class="empty">Serial tidak tersedia</div>');
+    view('<div class="row mb" style="align-items:flex-start"><a href="#/watch" class="btn icon ghost">' + ic('left') + '</a><div class="cover" style="width:110px;flex:0 0 110px">' + imgOr(s.coverUrl, s.id, s.title) + '</div><div class="grow"><h1>' + esc(s.title) + '</h1><div class="row small"><span class="chip acc">' + esc(GENRES[s.genre] || s.genre) + '</span><span class="dim">' + s.episodes.length + ' episode · ' + fmtN(s.views) + ' tayang</span></div><p class="muted small">' + esc(s.logline) + '</p>' +
+      '<div class="row"><a class="btn pri" href="#/w/' + s.episodes[0].id + '">' + ic('play') + 'Putar EP 1</a>' + (s.paywall.enabled && !s.seasonPass ? '<button class="btn" data-act="buySeason" data-id="' + s.id + '" data-p="' + s.paywall.seasonPrice + '">🪙 Season pass ' + s.paywall.seasonPrice + '</button>' : s.seasonPass ? '<span class="chip ok">Season pass aktif</span>' : '') + '</div></div></div>' +
+      (s.paywall.enabled ? '<div class="note mb small">EP 1–' + s.paywall.freeCount + ' gratis · episode berikutnya ' + s.paywall.coinsPerEp + ' koin</div>' : '') +
+      '<div class="card pad0"><div class="list">' + s.episodes.map(function (e) { return '<a class="li click" href="#/w/' + e.id + '" style="text-decoration:none;color:inherit"><span class="cover" style="width:48px;flex:0 0 48px;border-radius:8px">' + imgOr(e.thumbUrl, e.id, 'EP' + e.number) + '</span><div class="grow" style="min-width:0"><b>EP ' + e.number + ' · ' + esc(e.title) + '</b><div class="tiny dim trunc">' + esc(e.hook) + '</div><div class="tiny dim">' + secFmt(e.durationSec) + ' · ' + fmtN(e.stats.views) + ' tayang · ♥ ' + fmtN(e.stats.likes) + '</div></div>' + (e.unlocked ? (e.free ? '<span class="chip ok">Gratis</span>' : '<span class="chip ok">Terbuka</span>') : '<span class="chip warn">🔒 ' + s.paywall.coinsPerEp + '</span>') + '</a>'; }).join('') + '</div></div>');
+  };
+  if (S.catalog) go2(S.catalog);
+  api('catalog.list', {}).then(function (c) { S.catalog = c; go2(c); }).catch(err);
+});
+
+ACT.buySeason = function (el) {
+  if (!S.user) return go('#/login');
+  confirmBox('Beli season pass seharga <b>' + el.dataset.p + ' koin</b>? Semua episode serial ini terbuka.', 'Beli').then(function (y) {
+    if (y) run(api('wallet.unlock', { seriesId: el.dataset.id, season: true }), 'Season pass aktif 🎉').then(function () { S.catalog = null; route(); }).catch(function (e) { if (e.code === 'INSUFFICIENT') go('#/wallet'); });
+  });
+};
+
+var PL = {};
+on('/w/:id', function (id) {
+  stopPlayer();
+  view('<div class="watch-wrap"><div class="player" id="player"><div class="skel" style="position:absolute;inset:0"></div></div><div id="pSide" class="col hide-m" style="width:320px"></div></div>');
+  api('viewer.playback', { episodeId: id }).then(function (p) {
+    PL = { p: p, maxPct: 0, startT: Date.now(), sent: {}, lang: '' };
+    renderPlayer();
+    if (!p.locked) api('viewer.engage', { episodeId: id, type: 'VIEW' }, { silent: true }).catch(function () { });
+    saveHist(p, 0);
+  }).catch(function (e) { err(e); view('<div class="empty">Episode tidak tersedia. <a href="#/watch">Kembali</a></div>'); });
+});
+function embedUrl(u) {
+  var y = u.match(/(?:youtu\.be\/|youtube\.com\/(?:shorts\/|watch\?v=|embed\/))([\w-]{6,})/);
+  if (y) return { type: 'iframe', src: 'https://www.youtube.com/embed/' + y[1] + '?autoplay=1&playsinline=1&rel=0' };
+  if (/drive\.google\.com\/file\/d\/[\w-]+\/preview/.test(u)) return { type: 'iframe', src: u };
+  return { type: 'video', src: u };
+}
+function renderPlayer() {
+  var p = PL.p, e = p.episode, st = p.stats, box = $('#player'); if (!box) return; PL.mtype = '';
+  var media = '';
+  if (!p.locked && p.videoUrl) { var m = embedUrl(p.videoUrl); PL.mtype = m.type; media = m.type === 'iframe' ? '<iframe src="' + esc(m.src) + '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>' : '<video id="vid" src="' + esc(m.src) + '" playsinline autoplay controls preload="metadata"' + (e.thumbUrl ? ' poster="' + esc(e.thumbUrl) + '"' : '') + '></video>'; }
+  else media = '<div class="poster">' + imgOr(e.thumbUrl, e.id, p.series.title) + '</div>';
+  var lock = p.locked ? '<div class="p-lock">' + ic('lock') + '<h2>EP ' + e.number + ' terkunci</h2><p class="small" style="opacity:.8">' + esc(e.hook) + '</p>' +
+    (S.user ? '<button class="btn pri" data-act="unlockEp">🪙 Buka dengan ' + p.price + ' koin</button><button class="btn" data-act="buySeason" data-id="' + p.series.id + '" data-p="' + p.seasonPrice + '">Season pass ' + p.seasonPrice + ' koin</button><a class="btn ghost" href="#/wallet">Isi ulang koin</a>' : '<a class="btn pri" href="#/login">Masuk / daftar untuk membuka</a>') + '</div>' : '';
+  var subLangs = p.dubs.length ? '<button data-act="subLang" title="Bahasa subtitle">' + ic('globe') + '<small>' + (PL.lang || 'ID') + '</small></button>' : '';
+  box.innerHTML = media + '<div class="p-top"><a href="#/watch/' + p.series.id + '" class="btn sm icon ghost" style="color:#fff;border-color:rgba(255,255,255,.2)">' + ic('left') + '</a><div class="grow" style="min-width:0"><b class="trunc" style="display:block">' + esc(p.series.title) + '</b><span class="tiny" style="opacity:.8">EP ' + e.number + ' · ' + esc(e.title) + '</span></div></div>' +
+    '<div class="p-sub" id="psub"></div><div class="p-side"><button data-act="pLike" class="' + (st.liked ? 'on' : '') + '">' + ic('heart') + '<small>' + fmtN(st.likes) + '</small></button><button data-act="pMark" class="' + (st.bookmarked ? 'on2' : '') + '">' + ic('mark') + '<small>' + fmtN(st.bookmarks) + '</small></button><button data-act="pShare">' + ic('share') + '<small>Bagikan</small></button><button data-act="pEps">' + ic('list') + '<small>Episode</small></button>' + subLangs + '</div>' +
+    '<div class="p-bot"><div class="small clamp2" style="opacity:.9">' + esc(e.hook) + '</div><div class="row mt" style="gap:6px">' + (p.prevId ? '<a class="btn sm" href="#/w/' + p.prevId + '">' + ic('left') + '</a>' : '') + (p.nextId ? '<a class="btn sm pri" href="#/w/' + p.nextId + '">EP berikutnya ' + ic('right') + '</a>' : '<span class="tiny" style="opacity:.7">Episode terbaru</span>') + '</div></div><div class="p-prog"><i id="pprog" style="width:0"></i></div>' + lock;
+  box.classList.toggle('hasv', PL.mtype === 'video' && !p.locked && !!p.videoUrl);
+  var side = $('#pSide');
+  if (side) side.innerHTML = '<div class="card"><h3>' + esc(p.series.title) + '</h3><div class="small muted">' + fmtN(st.views) + ' tayang · rata-rata ditonton ' + st.avgWatchPct + '%</div><div class="tiny dim mt">Geser ke atas/bawah pada video, atau tombol ↑ ↓ keyboard untuk pindah episode.</div></div><div class="card"><div class="ep-pills" id="pills"></div></div>';
+  fillPills();
+  bindPlayer();
+}
+function fillPills() {
+  var el = $('#pills'); if (!el) return;
+  var s = (S.catalog || []).filter(function (x) { return x.id === PL.p.series.id; })[0];
+  var draw = function (s) { el.innerHTML = s.episodes.map(function (e) { return '<a href="#/w/' + e.id + '" class="ep-pill ' + (e.id === PL.p.episode.id ? 'on' : '') + (e.unlocked ? '' : ' lock') + '" style="text-decoration:none;color:inherit">' + e.number + '</a>'; }).join(''); };
+  if (s) draw(s); else api('catalog.list', {}, { silent: true }).then(function (c) { S.catalog = c; var x = c.filter(function (y) { return y.id === PL.p.series.id; })[0]; if (x) draw(x); });
+}
+function bindPlayer() {
+  var box = $('#player'), v = $('#vid'), p = PL.p;
+  var subs = function () { if (!PL.lang) return p.subtitles; var d = p.dubs.filter(function (x) { return x.lang === PL.lang; })[0]; return d ? d.subtitles : p.subtitles; };
+  if (v) {
+    v.addEventListener('timeupdate', function () {
+      var t = v.currentTime, dur = v.duration || p.episode.durationSec || 1, pct = Math.min(100, t / dur * 100);
+      PL.maxPct = Math.max(PL.maxPct, pct); $('#pprog').style.width = pct + '%';
+      var cue = subs().filter(function (s) { return t >= s.startSec && t <= s.endSec; })[0];
+      $('#psub').innerHTML = cue ? '<span>' + esc(cue.text) + '</span>' : '';
+      [25, 50, 75].forEach(function (m) { if (pct >= m && !PL.sent[m]) { PL.sent[m] = 1; sendWatch(m); } });
+      if (p.hooks && !PL.hookShown && t >= Math.max(0, dur - 6)) showHook();
+    });
+    v.addEventListener('ended', function () { sendWatch(100); showHook(true); });
+    v.addEventListener('error', function () { if (/^#\/w\//.test(location.hash) && $('#vid') === v) toast('Video tidak dapat diputar. Pastikan URL dapat diakses publik.', 'bad'); });
+  } else if (PL.mtype === 'iframe' && !p.locked) {
+    PL.iTimer = setInterval(function () { var pct = Math.min(100, (Date.now() - PL.startT) / 1000 / (p.episode.durationSec || 90) * 100); PL.maxPct = pct; $('#pprog') && ($('#pprog').style.width = pct + '%'); if (pct >= 100) { clearInterval(PL.iTimer); sendWatch(100); showHook(true); } }, 1000);
+  }
+  var y0 = null;
+  box.addEventListener('touchstart', function (ev) { if (ev.target.closest('.p-side,.p-top,.p-bot,.p-lock,.p-hook,video')) { y0 = null; return; } y0 = ev.touches[0].clientY; }, { passive: true });
+  box.addEventListener('touchend', function (ev) { if (y0 === null) return; var dy = ev.changedTouches[0].clientY - y0; if (dy < -70 && p.nextId) go('#/w/' + p.nextId); else if (dy > 70 && p.prevId) go('#/w/' + p.prevId); y0 = null; });
+  box.addEventListener('wheel', function (ev) { if (Math.abs(ev.deltaY) < 40 || PL.wheelLock) return; PL.wheelLock = 1; setTimeout(function () { PL.wheelLock = 0; }, 900); if (ev.deltaY > 0 && p.nextId) go('#/w/' + p.nextId); else if (ev.deltaY < 0 && p.prevId) go('#/w/' + p.prevId); }, { passive: true });
+}
+document.addEventListener('keydown', function (e) { if (!PL.p || !/^#\/w\//.test(location.hash) || /input|textarea/i.test(document.activeElement.tagName)) return; if (e.key === 'ArrowDown' && PL.p.nextId) go('#/w/' + PL.p.nextId); if (e.key === 'ArrowUp' && PL.p.prevId) go('#/w/' + PL.p.prevId); });
+function sendWatch(pct) { var p = PL.p; if (!p || p.locked) return; saveHist(p, pct); api('viewer.engage', { episodeId: p.episode.id, type: 'WATCH', value: Math.round(pct) }, { silent: true }).catch(function () { }); }
+function saveHist(p, pct) { var h = LS.get('hist', {}); var cur = h[p.episode.id] || {}; h[p.episode.id] = { id: p.episode.id, n: p.episode.number, sid: p.series.id, st: p.series.title, thumb: p.episode.thumbUrl, pct: Math.max(cur.pct || 0, Math.round(pct)), t: Date.now() }; var ks = Object.keys(h); if (ks.length > 60) { ks.sort(function (a, b) { return h[a].t - h[b].t; }); delete h[ks[0]]; } LS.set('hist', h); }
+function stopPlayer() { if (PL.iTimer) clearInterval(PL.iTimer); var ov = $('#vid'); if (ov) { ov.pause(); ov.removeAttribute('src'); ov.load(); } if (PL.p && !PL.p.locked && PL.maxPct > 0 && PL.maxPct < 100 && !PL.sent.final) { PL.sent.final = 1; sendWatch(PL.maxPct); } }
+window.addEventListener('hashchange', function () { if (!/^#\/w\//.test(location.hash)) stopPlayer(); });
+window.addEventListener('pagehide', stopPlayer);
+function showHook(end) {
+  var p = PL.p; if (PL.hookShown && !end) return; PL.hookShown = 1;
+  var h = p.hooks, text = h ? h.text : p.episode.hook; if (!text && !p.nextId) return;
+  if (h) api('viewer.engage', { episodeId: p.episode.id, type: 'HOOK_VIEW', hookId: h.id }, { silent: true }).catch(function () { });
+  var old = $('.p-hook'); if (old) old.remove();
+  $('#player').insertAdjacentHTML('beforeend', '<div class="p-hook"><div class="tiny" style="color:var(--acc2);font-weight:800;letter-spacing:.1em">BERSAMBUNG…</div><div style="font-weight:700;margin:6px 0 10px">' + esc(text) + '</div>' + (p.nextId ? '<button class="btn pri" data-act="hookNext">EP berikutnya ' + ic('right') + '</button>' : '<span class="small">Nantikan episode selanjutnya!</span>') + '</div>');
+}
+ACT.hookNext = function () { var p = PL.p; if (p.hooks) api('viewer.engage', { episodeId: p.episode.id, type: 'HOOK_CONTINUE', hookId: p.hooks.id }, { silent: true }).catch(function () { }); go('#/w/' + p.nextId); };
+ACT.pLike = function () { engage('LIKE'); };
+ACT.pMark = function () { engage('BOOKMARK'); };
+function engage(t) { api('viewer.engage', { episodeId: PL.p.episode.id, type: t }, { silent: true, noQueue: true }).then(function (s) { if (s && s.views !== undefined) { PL.p.stats = s; renderSideStats(); } }).catch(err); }
+function renderSideStats() { var st = PL.p.stats, b = $$('.p-side button'); if (b[0]) { b[0].className = st.liked ? 'on' : ''; b[0].querySelector('small').textContent = fmtN(st.likes); } if (b[1]) { b[1].className = st.bookmarked ? 'on2' : ''; b[1].querySelector('small').textContent = fmtN(st.bookmarks); } }
+ACT.pShare = function () { var p = PL.p, url = location.href, t = p.series.title + ' — EP ' + p.episode.number; api('viewer.engage', { episodeId: p.episode.id, type: 'SHARE' }, { silent: true }).catch(function () { }); if (navigator.share) navigator.share({ title: t, text: p.episode.hook, url: url }).catch(function () { }); else copy(t + ' ' + url); };
+ACT.pEps = function () { var s = (S.catalog || []).filter(function (x) { return x.id === PL.p.series.id; })[0]; modal('Daftar episode', '<div class="ep-pills">' + (s ? s.episodes.map(function (e) { return '<a href="#/w/' + e.id + '" class="ep-pill ' + (e.id === PL.p.episode.id ? 'on' : '') + (e.unlocked ? '' : ' lock') + '" style="text-decoration:none;color:inherit">' + e.number + '</a>'; }).join('') : 'Memuat…') + '</div>'); };
+ACT.subLang = function () { var ls = [''].concat(PL.p.dubs.map(function (d) { return d.lang; })); PL.lang = ls[(ls.indexOf(PL.lang) + 1) % ls.length]; var b = $('[data-act="subLang"] small'); if (b) b.textContent = (PL.lang || 'ID').toUpperCase(); toast('Subtitle: ' + (PL.lang || 'asli')); };
+ACT.unlockEp = function () {
+  run(api('wallet.unlock', { episodeId: PL.p.episode.id }), 'Episode terbuka 🎉').then(function () { S.catalog = null; route(); }).catch(function (e) { if (e.code === 'INSUFFICIENT') setTimeout(function () { go('#/wallet'); }, 900); });
+};
+
+/* ---------------- Dompet ---------------- */
+on('/wallet', function () {
+  skel(2);
+  api('wallet.get').then(function (w) {
+    S.wallet = w; S.pkSel = w.packages[0] && w.packages[0].id;
+    var pay = w.payment || {};
+    view(pageHead('Dompet koin', 'Koin dipakai untuk membuka episode & season pass') +
+      '<div class="grid g3"><div class="card kpi hl"><span class="l">Saldo</span><span class="v coin">🪙 ' + fmtN(w.balance) + '</span><span class="tiny dim">Total terpakai ' + fmtN(w.spent) + ' koin</span></div>' +
+      '<div class="card col" style="grid-column:span 2"><h3>' + ic('plus') + 'Isi ulang</h3><div class="grid g4 keep" id="pkgs">' + w.packages.map(function (p) { return '<div class="pkg ' + (p.id === S.pkSel ? 'on' : '') + '" data-act="pkSel" data-id="' + p.id + '"><b>' + p.coins + '</b>' + (p.bonus ? '<span class="chip ok">+' + p.bonus + ' bonus</span>' : '<span class="tiny dim">koin</span>') + '<div class="small mt">' + idr(p.priceIdr) + '</div></div>'; }).join('') + '</div>' +
+      '<div class="note">' + (pay.bankName ? '<b>Transfer ke:</b> ' + esc(pay.bankName) + ' ' + esc(pay.accountNo) + ' a.n. ' + esc(pay.accountName) + '<br>' : '<b>Info pembayaran belum diatur admin.</b><br>') + esc(pay.note) + '</div>' +
+      (pay.qrisUrl ? '<div class="row"><img src="' + esc(pay.qrisUrl) + '" alt="QRIS" style="width:120px;border-radius:10px;cursor:zoom-in;background:#fff" data-act="zoomImg" data-src="' + esc(pay.qrisUrl) + '"><span class="small muted">Ketuk untuk memperbesar QRIS</span></div>' : '') +
+      '<div class="grid g2"><label class="f">Metode<select class="i" id="tpM"><option>TRANSFER</option><option>QRIS</option><option>E-WALLET</option></select></label><label class="f">Catatan (opsional)<input class="i" id="tpN" placeholder="mis. nama pengirim"></label></div>' +
+      '<input type="hidden" id="tpProof"><div class="row"><button class="btn" data-act="tpProofUp">' + ic('up') + 'Unggah bukti transfer</button><span id="tpPrev" class="small dim">Belum ada bukti</span></div><button class="btn pri" data-act="tpGo">Kirim permintaan top-up</button></div></div>' +
+      '<div class="grid g2 mt"><div class="card pad0"><div style="padding:14px 14px 4px"><h3>Riwayat top-up</h3></div><div class="list">' + (w.topups.length ? w.topups.map(function (t) { return '<div class="li small"><span class="chip ' + (t.status === 'APPROVED' ? 'ok' : t.status === 'REJECTED' ? 'bad' : 'warn') + '">' + t.status + '</span><span class="grow">' + t.coins + ' koin · ' + idr(t.amountIdr) + '</span><span class="tiny dim">' + fmtDate(t.createdAt) + '</span></div>'; }).join('') : '<div class="empty">Belum ada</div>') + '</div></div>' +
+      '<div class="card pad0"><div style="padding:14px 14px 4px"><h3>Pembelian</h3></div><div class="list">' + (w.unlocks.length ? w.unlocks.map(function (u) { return '<div class="li small"><span class="chip">' + (u.type === 'SEASON' ? 'Season' : 'Episode') + '</span><span class="grow coin">−' + u.coins + '</span><span class="tiny dim">' + fmtDate(u.createdAt, 1) + '</span></div>'; }).join('') : '<div class="empty">Belum ada</div>') + '</div></div></div>' +
+      '<p class="tiny dim mt">Koin adalah item digital non-tunai untuk membuka konten di aplikasi ini dan tidak dapat diuangkan kembali. Dengan melakukan top-up Anda menyetujui syarat layanan penyelenggara.</p>');
+  }).catch(err);
+});
+ACT.pkSel = function (el) { S.pkSel = el.dataset.id; $$('#pkgs .pkg').forEach(function (p) { p.classList.toggle('on', p === el); }); };
+ACT.tpProofUp = function () { uploadFlow('image', { max: 1400, purpose: 'topup-proof' }).then(function (r) { if (r) { $('#tpProof').value = r.url; $('#tpPrev').innerHTML = '<img src="' + esc(r.url) + '" style="height:48px;border-radius:6px;cursor:zoom-in" data-act="zoomImg" data-src="' + esc(r.url) + '"> ✓'; } }); };
+ACT.tpGo = function () { run(api('topup.request', { packageId: S.pkSel, method: val('tpM'), note: val('tpN'), proofUrl: val('tpProof') }), 'Permintaan terkirim — menunggu verifikasi admin').then(route); };
+
+/* ---------------- Admin: monetisasi, anggaran AI, audit, pengaturan, uji ---------------- */
+on('/money', function () {
+  if (!can('ADMIN')) return go('#/');
+  skel(3);
+  Promise.all([api('topup.list', {}), api('royalty.get', {})]).then(function (r) {
+    var tps = r[0], roy = r[1], pend = tps.filter(function (t) { return t.status === 'PENDING'; });
+    S.pendingTopups = pend.length;
+    var tot = roy.reduce(function (a, x) { a.g += x.grossIdr; a.n += x.netIdr; a.c += x.coins; return a; }, { g: 0, n: 0, c: 0 });
+    var paidIdr = tps.filter(function (t) { return t.status === 'APPROVED'; }).reduce(function (a, t) { return a + t.amountIdr; }, 0);
+    view(pageHead('Monetisasi', 'Verifikasi top-up, royalti per serial, dan ekonomi koin', '<a class="btn" href="#/settings?tab=biz">' + ic('gear') + 'Paket & pembayaran</a>') +
+      '<div class="grid g4 keep2"><div class="card kpi"><span class="l">Kas masuk (top-up disetujui)</span><span class="v">' + idr(paidIdr) + '</span></div><div class="card kpi"><span class="l">Koin terpakai</span><span class="v">' + fmtN(tot.c) + '</span></div><div class="card kpi"><span class="l">Nilai kotor konten</span><span class="v">' + idr(tot.g) + '</span></div><div class="card kpi"><span class="l">Bagian kreator (neto)</span><span class="v">' + idr(tot.n) + '</span></div></div>' +
+      '<div class="card mt pad0"><div style="padding:14px" class="row between"><h3 style="margin:0">' + ic('wallet') + 'Menunggu verifikasi (' + pend.length + ')</h3></div><div class="list">' + (pend.length ? pend.map(function (t) {
+        return '<div class="li"><img src="' + esc(t.proofUrl) + '" alt="bukti" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:zoom-in;background:var(--card2)" data-act="zoomImg" data-src="' + esc(t.proofUrl) + '"><div class="grow" style="min-width:0"><b>' + t.coins + ' koin · ' + idr(t.amountIdr) + '</b><div class="tiny dim trunc">' + esc(t.userName) + ' · ' + esc(t.method) + ' · ' + fmtDate(t.createdAt, 1) + '</div>' + (t.note ? '<div class="tiny">' + esc(t.note) + '</div>' : '') + '</div><div class="row nw"><button class="btn sm ok" data-act="tpRev" data-id="' + t.id + '" data-d="APPROVE">' + ic('check') + '</button><button class="btn sm bad" data-act="tpRev" data-id="' + t.id + '" data-d="REJECT">' + ic('x') + '</button></div></div>';
+      }).join('') : '<div class="empty">Tidak ada permintaan baru ✓</div>') + '</div></div>' +
+      '<div class="card mt pad0"><div style="padding:14px"><h3 style="margin:0">' + ic('coin') + 'Royalti per serial</h3></div><div class="tbl"><table class="t resp"><thead><tr><th>Serial</th><th>Koin</th><th>Kotor</th><th>Fee platform</th><th>Neto kreator</th><th>Pembayar</th><th>Konversi</th><th>ARPU</th></tr></thead><tbody>' +
+      roy.map(function (x) { return '<tr><td data-l="Serial"><a href="#/series/' + x.seriesId + '?tab=pay">' + esc(x.title) + '</a></td><td data-l="Koin">' + fmtN(x.coins) + '</td><td data-l="Kotor">' + idr(x.grossIdr) + '</td><td data-l="Fee">' + idr(x.platformFeeIdr) + ' (' + x.feePct + '%)</td><td data-l="Neto"><b>' + idr(x.netIdr) + '</b></td><td data-l="Pembayar">' + x.payers + '/' + x.viewers + '</td><td data-l="Konversi">' + x.conversionPct + '%</td><td data-l="ARPU">' + idr(x.arpuIdr) + '</td></tr>'; }).join('') + '</tbody></table></div></div>' +
+      '<div class="card mt pad0"><div style="padding:14px"><h3 style="margin:0">Riwayat top-up</h3></div><div class="list">' + tps.filter(function (t) { return t.status !== 'PENDING'; }).slice(0, 40).map(function (t) { return '<div class="li small"><span class="chip ' + (t.status === 'APPROVED' ? 'ok' : 'bad') + '">' + t.status + '</span><span class="grow trunc">' + esc(t.userName) + '</span><span>' + idr(t.amountIdr) + '</span><span class="tiny dim hide-m">' + esc(t.reviewedBy) + '</span></div>'; }).join('') + '</div></div>');
+  }).catch(err);
+});
+ACT.tpRev = function (el) {
+  var go2 = function (note) { run(api('topup.review', { id: el.dataset.id, decision: el.dataset.d, note: note }, { noQueue: true }), el.dataset.d === 'APPROVE' ? 'Koin dikreditkan ✓' : 'Ditolak').then(function () { refreshBadges(); route(); }); };
+  if (el.dataset.d === 'REJECT') { modal('Tolak top-up', '<label class="f">Alasan (dikirim ke pengguna bila WA aktif)<input class="i" id="rjN" value="Bukti transfer tidak valid"></label>', '<button class="btn bad" id="rjGo">Tolak</button>'); $('#rjGo').onclick = function () { var n = val('rjN'); closeModal(); go2(n); }; }
+  else go2('');
+};
+
+on('/budget', function () {
+  skel(2);
+  api('budget.get').then(function (b) {
+    var ad = can('ADMIN'), pct = b.dailyCapUsd ? Math.min(100, b.spentTodayUsd / b.dailyCapUsd * 100) : 0;
+    view(pageHead('Anggaran AI', 'Pre-flight check: setiap panggilan AI diperiksa terhadap batas harian & per episode') +
+      (!b.aiEnabled ? '<div class="note warn mb">AI tidak aktif pada lisensi saat ini.</div>' : '') +
+      '<div class="grid g3"><div class="card kpi"><span class="l">Terpakai hari ini</span><span class="v">' + usd(b.spentTodayUsd) + '</span><div class="bar mt"><i style="width:' + pct + '%"></i></div><span class="tiny dim">dari ' + usd(b.dailyCapUsd) + ' · ≈ ' + idr(b.spentTodayUsd * b.usdToIdr) + '</span></div>' +
+      '<div class="card kpi"><span class="l">Total sepanjang waktu</span><span class="v">' + usd(b.totalUsd) + '</span><span class="tiny dim">≈ ' + idr(b.totalUsd * b.usdToIdr) + '</span></div>' +
+      '<div class="card kpi"><span class="l">Status</span><span class="v" style="font-size:1rem">' + (b.killSwitch ? '<span class="chip bad">KILL SWITCH AKTIF</span>' : b.hasKey ? '<span class="chip ok">Siap</span>' : '<span class="chip warn">API key belum ada</span>') + '</span><span class="tiny dim">' + esc(b.model) + ' · ' + esc(b.imageModel) + '</span></div></div>' +
+      (ad ? '<div class="card mt col" style="max-width:720px"><h3>' + ic('gear') + 'Kontrol</h3><div class="grid g2"><label class="f">Batas harian (USD)<input class="i" type="number" step="0.5" id="bgD" value="' + b.dailyCapUsd + '"></label><label class="f">Batas per episode (USD)<input class="i" type="number" step="0.1" id="bgE" value="' + b.episodeCapUsd + '"></label>' +
+        '<label class="f">Model teks<input class="i" id="bgM" value="' + esc(b.model) + '"></label><label class="f">Model gambar<input class="i" id="bgIM" value="' + esc(b.imageModel) + '"></label></div>' +
+        '<label class="f">Gemini API key ' + (b.hasKey ? '(tersimpan — isi untuk mengganti)' : '') + '<input class="i" id="bgK" type="password" placeholder="AIza…" autocomplete="off"></label><label class="check"><input type="checkbox" id="bgKS"' + (b.killSwitch ? ' checked' : '') + '><span><b>Kill switch</b> — hentikan semua panggilan AI segera</span></label>' +
+        '<div class="row"><button class="btn pri" data-act="bgSave">Simpan</button>' + (b.hasKey ? '<button class="btn bad" data-act="bgClr">Hapus API key</button>' : '') + '</div><div class="tiny dim">Kunci disimpan di Script Properties server, tidak pernah dikirim ke browser. Dapatkan di Google AI Studio. Jangan kirim naskah rahasia memakai kunci tier gratis karena data dapat dipakai untuk peningkatan layanan oleh Google.</div></div>' : '') +
+      '<div class="grid g2 mt"><div class="card"><h3>Per fitur</h3>' + (Object.keys(b.byFeature).map(function (k) { var f = b.byFeature[k]; return '<div class="row between small" style="padding:6px 0;border-top:1px solid var(--line)"><span class="chip">' + esc(k) + '</span><span>' + f.calls + '× · ' + usd(f.costUsd) + '</span></div>'; }).join('') || '<div class="empty">Belum ada pemakaian</div>') + '</div>' +
+      '<div class="card pad0"><div style="padding:14px 14px 4px"><h3>Panggilan terakhir</h3></div><div class="list">' + b.recent.map(function (u) { return '<div class="li tiny"><span class="chip">' + esc(u.feature) + '</span><span class="grow dim">' + (u.inTokens + u.outTokens) + ' token</span><span>' + usd(u.costUsd) + '</span><span class="dim">' + ago(u.createdAt) + '</span></div>'; }).join('') + '</div></div></div>');
+  }).catch(err);
+});
+ACT.bgSave = function () { var d = { dailyCapUsd: num('bgD'), episodeCapUsd: num('bgE'), killSwitch: val('bgKS'), model: val('bgM'), imageModel: val('bgIM') }; if (val('bgK')) d.apiKey = val('bgK').trim(); run(api('budget.save', d, { noQueue: true }), 'Anggaran disimpan').then(route); };
+ACT.bgClr = function () { confirmBox('Hapus API key Gemini?').then(function (y) { if (y) run(api('budget.save', { clearKey: true }, { noQueue: true }), 'Dihapus').then(route); }); };
+
+on('/audit', function () {
+  skel(2);
+  var q = qp('q');
+  api('audit.list', { q: q, limit: 300 }).then(function (list) {
+    view(pageHead('Jejak audit', 'Catatan tidak dapat diubah dari aplikasi — setiap perubahan status, persetujuan, dan transaksi tercatat') +
+      '<div class="row mb"><input class="i grow" id="auQ" placeholder="Cari aksi, email, ID…" value="' + esc(q) + '" style="max-width:420px"><button class="btn" data-act="auGo">Cari</button><button class="btn" data-act="auCsv">' + ic('down') + 'CSV</button></div>' +
+      '<div class="card pad0"><div class="tbl"><table class="t resp"><thead><tr><th>Waktu</th><th>Aksi</th><th>Pelaku</th><th>Target</th><th>Detail</th></tr></thead><tbody>' + list.map(function (a) { return '<tr><td data-l="Waktu" class="tiny">' + fmtDate(a.createdAt, 1) + '</td><td data-l="Aksi"><span class="chip">' + esc(a.action) + '</span></td><td data-l="Pelaku" class="small">' + esc(a.email) + '</td><td data-l="Target" class="tiny mono">' + esc(a.resource) + ' ' + esc(a.targetId) + '</td><td data-l="Detail" class="tiny dim" style="max-width:320px;word-break:break-word">' + esc(JSON.stringify(a.details || {})) + '</td></tr>'; }).join('') + '</tbody></table></div>' + (list.length ? '' : '<div class="empty">Kosong</div>') + '</div>');
+    S.auditList = list;
+    $('#auQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') ACT.auGo(); });
+  }).catch(err);
+});
+ACT.auGo = function () { go('#/audit?q=' + encodeURIComponent(val('auQ'))); };
+ACT.auCsv = function () { var rows = [['waktu', 'aksi', 'email', 'resource', 'target', 'detail']].concat((S.auditList || []).map(function (a) { return [a.createdAt, a.action, a.email, a.resource, a.targetId, JSON.stringify(a.details || {})]; })); dl('audit_cineai.csv', rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n'), 'text/csv'); };
+
+/* ---------------- Pengaturan ---------------- */
+var SET_TABS = [['brand', 'Branding'], ['users', 'Pengguna'], ['biz', 'Bisnis & pembayaran'], ['int', 'Integrasi'], ['license', 'Lisensi'], ['sys', 'Sistem']];
+on('/settings', function () {
+  if (!can('ADMIN')) return go('#/');
+  var tab = qp('tab') || 'brand';
+  skel(2);
+  api('settings.get').then(function (st) {
+    S.set = st;
+    var head = pageHead('Pengaturan', esc(st.org && st.org.name)) + '<div class="tabs">' + SET_TABS.map(function (t) { return '<a href="#/settings?tab=' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</a>'; }).join('') + '</div>';
+    view(head + '<div id="setBody"></div>');
+    (SETV[tab] || SETV.brand)(st);
+  }).catch(err);
+});
+var SETV = {};
+function sb(h) { $('#setBody').innerHTML = h; }
+SETV.brand = function (st) {
+  var b = st.branding;
+  sb('<div class="grid g2"><div class="card col"><label class="f">Nama organisasi<input class="i" id="stOrg" value="' + esc(st.org.name) + '"></label><div class="grid g2"><label class="f">Judul header<input class="i" id="bT" value="' + esc(b.title) + '" maxlength="24"></label><label class="f">Teks sorotan<input class="i" id="bH" value="' + esc(b.highlight) + '" maxlength="24"></label></div>' +
+    '<label class="f">Subjudul<input class="i" id="bS" value="' + esc(b.subtitle) + '"></label><div class="grid g2"><label class="f">Badge<input class="i" id="bB" value="' + esc(b.badge) + '" maxlength="16"></label><label class="f">Warna aksen<input class="i" type="color" id="bA" value="' + esc(b.accent) + '" style="padding:4px;height:42px"></label></div>' +
+    '<input type="hidden" id="bL" value="' + esc(b.logoUrl) + '"><div class="row"><button class="btn" data-act="logoUp">' + ic('up') + 'Unggah logo</button>' + (b.logoUrl ? '<button class="btn ghost bad" data-act="logoClr">Hapus logo</button>' : '') + '</div>' +
+    '<label class="f">Zoom logo di header (<span id="bZv">' + (b.logoZoom || 1) + '×</span>)<input type="range" id="bZ" min="0.5" max="3" step="0.05" value="' + (b.logoZoom || 1) + '"></label><button class="btn pri" data-act="brandSave">Simpan branding</button>' +
+    (!st.license.features.whiteLabel ? '<div class="tiny dim">Label “Powered by CineAI Studio” hanya bisa dihapus pada lisensi Studio (white-label).</div>' : '') + '</div>' +
+    '<div class="card"><h3>Pratinjau</h3><div class="card" style="background:var(--bg2)" id="bPrev"></div><p class="small muted mt">Ketuk logo pada header untuk melihatnya diperbesar (zoom & geser).</p></div></div>');
+  var prev = function () { var x = { title: val('bT'), highlight: val('bH'), subtitle: val('bS'), logoUrl: val('bL'), logoZoom: Number(val('bZ')) }; $('#bPrev').innerHTML = brandHtml(x); $('#bZv').textContent = x.logoZoom + '×'; document.documentElement.style.setProperty('--acc', val('bA')); };
+  $$('#setBody input').forEach(function (i) { i.addEventListener('input', prev); }); prev();
+};
+ACT.logoUp = function () { uploadFlow('image', { max: 512, png: true }).then(function (r) { if (r) { $('#bL').value = r.url; $('#bZ').dispatchEvent(new Event('input')); } }); };
+ACT.logoClr = function () { $('#bL').value = ''; $('#bZ').dispatchEvent(new Event('input')); };
+ACT.brandSave = function () { run(api('settings.save', { orgName: val('stOrg'), branding: { title: val('bT'), highlight: val('bH'), subtitle: val('bS'), badge: val('bB'), accent: val('bA'), logoUrl: val('bL'), logoZoom: Number(val('bZ')) } }, { noQueue: true }), 'Branding disimpan').then(function () { LS.del('boot'); boot(); }); };
+
+SETV.users = function () {
+  api('users.list').then(function (us) {
+    S.users = us;
+    sb('<div class="row end mb"><button class="btn pri" data-act="userForm">' + ic('plus') + 'Pengguna</button></div><div class="card pad0"><div class="list">' + us.map(function (u) { return '<div class="li">' + avatarHtml(u) + '<div class="grow" style="min-width:0"><b>' + esc(u.name) + '</b> ' + (u.active ? '' : '<span class="chip bad">nonaktif</span>') + '<div class="tiny dim trunc">' + esc(u.email) + (u.phone ? ' · ' + esc(u.phone) : '') + ' · login ' + (u.lastLogin ? ago(u.lastLogin) : 'belum') + '</div></div><span class="chip ' + (u.role === 'ADMIN' ? 'acc' : u.role === 'VIEWER' ? '' : 'info') + '">' + u.role + '</span><button class="btn sm icon" data-act="userForm" data-id="' + u.id + '">' + ic('edit') + '</button></div>'; }).join('') + '</div></div>' +
+      '<div class="note mt small"><b>Peran:</b> ADMIN — semua akses · CREATOR — serial, naskah, storyboard, assembly · REVIEWER — setujui naskah/frame, QC & sign-off · VIEWER — penonton (daftar sendiri).</div>');
+  }).catch(err);
+};
+ACT.userForm = function (el) {
+  var u = (el.dataset.id ? S.users.filter(function (x) { return x.id === el.dataset.id; })[0] : null) || { role: 'CREATOR', active: true };
+  modal(u.id ? 'Edit pengguna' : 'Pengguna baru', '<div class="col"><label class="f">Nama<input class="i" id="uN" value="' + esc(u.name) + '"></label><label class="f">Email<input class="i" id="uE" type="email" value="' + esc(u.email) + '"' + (u.id ? ' disabled' : '') + '></label><label class="f">No. WhatsApp<input class="i" id="uP" value="' + esc(u.phone) + '"></label>' +
+    '<label class="f">Peran<select class="i" id="uR">' + ['ADMIN', 'CREATOR', 'REVIEWER', 'VIEWER'].map(function (r) { return '<option' + (u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label><label class="f">' + (u.id ? 'Password baru (kosongkan bila tetap)' : 'Password awal (min 8)') + '<input class="i" id="uW" type="text" autocomplete="off"></label>' +
+    (u.id ? '<label class="check"><input type="checkbox" id="uA"' + (u.active ? ' checked' : '') + '><span>Akun aktif</span></label>' : '') + '</div>', '<button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="userSave" data-id="' + esc(u.id || '') + '">Simpan</button>');
+};
+ACT.userSave = function (el) { run(api('users.save', { id: el.dataset.id, name: val('uN'), email: val('uE'), phone: val('uP'), role: val('uR'), password: val('uW'), active: el.dataset.id ? val('uA') : true }, { noQueue: true }), 'Pengguna disimpan').then(function () { closeModal(); SETV.users(); }); };
+
+SETV.biz = function (st) {
+  var p = st.payment, e = st.economics, d = st.defaults;
+  sb('<div class="grid g2"><div class="card col"><h3>' + ic('coin') + 'Paket koin</h3><div id="pkRows">' + st.coinPackages.map(pkRow).join('') + '</div><button class="btn sm ghost" data-act="pkAdd">' + ic('plus') + 'Paket</button>' +
+    '<h3 class="mt">Ekonomi</h3><div class="grid g2"><label class="f">Nilai 1 koin (Rp, untuk royalti)<input class="i" type="number" id="ecV" value="' + e.coinValueIdr + '"></label><label class="f">Fee platform (%)<input class="i" type="number" id="ecF" value="' + e.platformFeePct + '"></label></div>' +
+    '<h3 class="mt">Default paywall serial baru</h3><div class="grid g3"><label class="f">Ep gratis<input class="i" type="number" id="dfF" value="' + d.freeCount + '"></label><label class="f">Koin/ep<input class="i" type="number" id="dfC" value="' + d.coinsPerEp + '"></label><label class="f">Season<input class="i" type="number" id="dfS" value="' + d.seasonPrice + '"></label></div></div>' +
+    '<div class="card col"><h3>' + ic('wallet') + 'Informasi pembayaran (manual)</h3><label class="f">Bank / e-wallet<input class="i" id="pyB" value="' + esc(p.bankName) + '"></label><label class="f">No. rekening<input class="i" id="pyN" value="' + esc(p.accountNo) + '"></label><label class="f">Atas nama<input class="i" id="pyA" value="' + esc(p.accountName) + '"></label>' +
+    '<input type="hidden" id="pyQ" value="' + esc(p.qrisUrl) + '"><div class="row"><button class="btn sm" data-act="qrisUp">' + ic('up') + 'Unggah gambar QRIS</button>' + (p.qrisUrl ? '<img src="' + esc(p.qrisUrl) + '" style="height:56px;border-radius:6px;background:#fff;cursor:zoom-in" data-act="zoomImg" data-src="' + esc(p.qrisUrl) + '">' : '') + '</div>' +
+    '<label class="f">Catatan untuk pembeli<textarea class="i" id="pyT">' + esc(p.note) + '</textarea></label><div class="note small">Penjualan koin = transaksi elektronik. Untuk skala komersial pertimbangkan payment gateway resmi (Midtrans/Xendit/DOKU), pendaftaran PSE, dan kewajiban pajak — konsultasikan dengan konsultan hukum/pajak.</div></div></div>' +
+    '<div class="row mt"><button class="btn pri" data-act="bizSave">Simpan pengaturan bisnis</button></div>');
+};
+function pkRow(p) { return '<div class="pk row nw" style="gap:6px;margin-bottom:6px"><input class="i" style="width:64px" data-k="id" value="' + esc(p.id) + '"><input class="i" type="number" data-k="coins" value="' + p.coins + '" placeholder="koin"><input class="i" type="number" data-k="bonus" value="' + (p.bonus || 0) + '" placeholder="bonus"><input class="i" type="number" data-k="priceIdr" value="' + p.priceIdr + '" placeholder="Rp"><button class="btn sm icon ghost" onclick="this.parentNode.remove()">' + ic('x') + '</button></div>'; }
+ACT.pkAdd = function () { $('#pkRows').insertAdjacentHTML('beforeend', pkRow({ id: 'P' + ($$('#pkRows .pk').length + 1), coins: 100, bonus: 0, priceIdr: 15000 })); };
+ACT.qrisUp = function () { uploadFlow('image', { max: 900, png: true }).then(function (r) { if (r) { $('#pyQ').value = r.url; toast('QRIS terunggah — klik Simpan', 'ok'); } }); };
+ACT.bizSave = function () {
+  var pk = $$('#pkRows .pk').map(function (r) { var o = {}; $$('[data-k]', r).forEach(function (i) { o[i.dataset.k] = i.type === 'number' ? Number(i.value) : i.value; }); return o; });
+  run(api('settings.save', { coinPackages: pk, economics: { coinValueIdr: num('ecV'), platformFeePct: num('ecF') }, defaults: { freeCount: num('dfF'), coinsPerEp: num('dfC'), seasonPrice: num('dfS') }, payment: { bankName: val('pyB'), accountNo: val('pyN'), accountName: val('pyA'), qrisUrl: val('pyQ'), note: val('pyT') } }, { noQueue: true }), 'Disimpan').then(function () { LS.del('boot'); });
+};
+
+SETV.int = function (st) {
+  sb('<div class="grid g2"><div class="card col"><h3>WhatsApp (Fonnte) — opsional</h3><label class="f">Token Fonnte ' + (st.fonnteSet ? '(tersimpan)' : '') + '<input class="i" id="ftT" type="password" placeholder="isi untuk mengganti"></label><label class="f">No. WA admin (notifikasi top-up & review)<input class="i" id="ftA" value="' + esc(st.adminPhone) + '"></label>' +
+    '<div class="row"><button class="btn pri" data-act="intSave">Simpan</button><button class="btn" data-act="waTest">Kirim tes</button>' + (st.fonnteSet ? '<button class="btn bad" data-act="waClr">Hapus token</button>' : '') + '</div><div class="note warn small">Fonnte bukan API resmi WhatsApp; nomor dapat diblokir Meta. Gunakan nomor khusus, kirim hanya notifikasi transaksional kepada pengguna yang memberi nomor. Fitur aktif pada lisensi Pro/Studio.</div></div>' +
+    '<div class="card col"><h3>Koneksi & PWA</h3><label class="f">URL Web App (untuk PWA GitHub Pages)<input class="i" readonly value="' + esc(st.webAppUrl) + '"></label><button class="btn sm" data-act="copy" data-text="' + esc(st.webAppUrl) + '">Salin URL</button>' +
+    (!IS_GAS ? '<a class="btn sm" href="#/connect">Ubah URL server di perangkat ini</a>' : '') + '<label class="f mt">URL License Server penyedia<input class="i" id="lsU" value="' + esc(st.licenseServer) + '" placeholder="https://script.google.com/macros/s/…/exec"></label><button class="btn sm" data-act="lsSave">Simpan URL lisensi</button></div></div>');
+};
+ACT.intSave = function () { var d = { adminPhone: val('ftA') }; if (val('ftT')) d.fonnteToken = val('ftT'); run(api('settings.save', d, { noQueue: true }), 'Disimpan').then(function (st) { S.set = st; SETV.int(st); }); };
+ACT.waTest = function () { run(api('notify.test', { phone: val('ftA') })).then(function (r) { toast(r.sent ? 'Pesan tes terkirim ✓' : 'Gagal mengirim (cek token/lisensi)', r.sent ? 'ok' : 'bad'); }); };
+ACT.waClr = function () { run(api('settings.save', { clearFonnte: true }, { noQueue: true }), 'Token dihapus').then(function (st) { SETV.int(st); }); };
+ACT.lsSave = function () { run(api('settings.save', { licenseServer: val('lsU') }, { noQueue: true }), 'URL lisensi disimpan'); };
+
+SETV.license = function (st) {
+  var L = st.license, f = L.features, lim = L.limits, inf = L.info || {};
+  var limTxt = function (n) { return n < 0 ? '∞' : n; };
+  sb('<div class="grid g2"><div class="card col"><div class="row between"><h3 style="margin:0">' + ic('key') + 'Status lisensi</h3><span class="chip ' + (L.tier === 'FREE' ? 'warn' : 'ok') + '">' + esc(L.label) + '</span></div>' +
+    '<div class="small">' + (inf.key ? 'Kunci: <span class="mono">' + esc(inf.key) + '</span><br>Pemegang: ' + esc(inf.buyer) + '<br>Berlaku s/d: ' + (inf.expiresAt ? fmtDate(inf.expiresAt) : 'selamanya') + '<br>Verifikasi terakhir: ' + fmtDate(inf.checkedAt, 1) + (inf.status !== 'ACTIVE' ? '<br><b style="color:var(--bad)">' + esc(inf.status) + '</b>' : '') : (inf.trialDaysLeft ? 'Trial tersisa <b>' + inf.trialDaysLeft + ' hari</b>.' : 'Trial berakhir — kembali ke paket Gratis.')) + '</div>' +
+    '<div class="grid g3 small"><div class="card kpi"><span class="l">Serial</span><span class="v">' + limTxt(lim.series) + '</span></div><div class="card kpi"><span class="l">Episode</span><span class="v">' + limTxt(lim.episodes) + '</span></div><div class="card kpi"><span class="l">User studio</span><span class="v">' + limTxt(lim.users) + '</span></div></div>' +
+    '<div class="row small">' + [['ai', 'AI Gemini'], ['monetization', 'Koin & paywall'], ['wa', 'Notifikasi WA'], ['whiteLabel', 'White-label']].map(function (x) { return '<span class="chip ' + (f[x[0]] ? 'ok' : '') + '">' + (f[x[0]] ? '✓ ' : '✗ ') + x[1] + '</span>'; }).join('') + '</div><div class="tiny dim">Script ID: <span class="mono">' + esc(L.scriptId) + '</span></div></div>' +
+    '<div class="card col"><h3>Aktivasi</h3><label class="f">Kunci lisensi<input class="i mono" id="lcK" placeholder="CINE-XXXX-XXXX-XXXX-XXXX" style="text-transform:uppercase"></label><button class="btn pri" data-act="lcGo">Aktifkan</button>' + (!L.server ? '<div class="note warn small">URL License Server belum diatur (tab Integrasi). Hubungi penyedia aplikasi.</div>' : '') +
+    '<div class="note small">Kunci terikat pada Script ID proyek ini. Pindah ke proyek lain? Minta penyedia melepas ikatan (rebind).</div></div></div>');
+};
+ACT.lcGo = function () { run(api('license.activate', { key: val('lcK') }), 'Lisensi aktif 🎉').then(function () { LS.del('boot'); boot().then(function () { go('#/settings?tab=license'); }); }); };
+
+SETV.sys = function (st) {
+  sb('<div class="grid g2"><div class="card col"><h3>Pendaftaran & QC</h3><label class="check"><input type="checkbox" id="syR"' + (st.publicRegistration !== false ? ' checked' : '') + '><span>Izinkan penonton mendaftar sendiri</span></label><div class="grid g2"><label class="f">Durasi maksimal episode (dtk)<input class="i" type="number" id="syM" value="' + st.qc.maxDurationSec + '"></label><label class="f">Skor hook minimum<input class="i" type="number" id="syH" value="' + st.qc.minHookScore + '"></label></div><button class="btn pri" data-act="sysSave">Simpan</button></div>' +
+    '<div class="card col"><h3>Backup</h3><p class="small muted">Ekspor seluruh tabel (tanpa hash password & sesi) ke berkas JSON di folder Drive “CineAI Studio - Media”. Google Sheet sendiri juga punya riwayat versi (File → Riwayat versi).</p><button class="btn" data-act="bkGo">' + ic('down') + 'Backup ke Drive</button><div id="bkOut"></div>' +
+    '<h3 class="mt">Cache perangkat</h3><p class="small muted">Antrean offline: ' + S.outbox.length + ' aksi.</p><div class="row"><button class="btn" data-act="clearCache">Hapus cache</button>' + (S.outbox.length ? '<button class="btn bad" data-act="clearQueue">Buang antrean</button>' : '') + '</div></div></div>');
+};
+ACT.sysSave = function () { run(api('settings.save', { publicRegistration: val('syR'), qc: { maxDurationSec: num('syM'), minHookScore: num('syH') } }, { noQueue: true }), 'Disimpan'); };
+ACT.bkGo = function () { run(api('backup.export', {})).then(function (r) { $('#bkOut').innerHTML = '<div class="note small">' + r.tables.map(function (t) { return esc(t.name) + ': ' + t.rows; }).join(' · ') + '<br><a href="' + esc(r.driveUrl) + '" target="_blank" rel="noopener">Buka berkas backup</a></div>'; }); };
+ACT.clearQueue = function () { confirmBox('Buang ' + S.outbox.length + ' aksi yang belum terkirim?').then(function (y) { if (y) { S.outbox = []; LS.set('outbox', []); renderNet(); route(); } }); };
+
+on('/tests', function () {
+  view(pageHead('Uji sistem', 'Uji otomatis server (hash, sesi, pemecahan sel 50rb, mesin status, RBAC, validasi, lisensi)', '<button class="btn pri" data-act="tsGo">' + ic('play') + 'Jalankan</button>') + '<div id="tsOut"></div>');
+  ACT.tsGo();
+});
+ACT.tsGo = function () {
+  var o = $('#tsOut'); if (o) o.innerHTML = '<div class="skel"></div>';
+  api('tests.run', {}).then(function (r) {
+    $('#tsOut').innerHTML = '<div class="card mb row between"><b>' + r.passed + '/' + r.total + ' lulus</b><span class="chip ' + (r.passed === r.total ? 'ok' : 'bad') + '">' + (r.passed === r.total ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + '</span></div><div class="card pad0">' + r.items.map(function (i) { return '<div class="chk"><span class="ic ' + (i.ok ? 'PASSED' : 'FAILED') + '">' + (i.ok ? '✓' : '✗') + '</span><div class="grow small"><b>' + esc(i.name) + '</b>' + (i.msg ? '<div class="tiny" style="color:var(--bad)">' + esc(i.msg) + '</div>' : '') + '</div><span class="tiny dim">' + i.ms + ' ms</span></div>'; }).join('') + '</div>' +
+      '<div class="card mt small"><b>Klien:</b> mode ' + (IS_GAS ? 'Apps Script' : 'PWA') + ' · ' + (S.online ? 'online' : 'offline') + ' · antrean ' + S.outbox.length + ' · SW ' + ('serviceWorker' in navigator && navigator.serviceWorker.controller ? 'aktif' : 'tidak aktif') + ' · localStorage ' + (function () { try { localStorage.setItem('t', '1'); localStorage.removeItem('t'); return 'OK'; } catch (e) { return 'diblokir'; } })() + '</div>';
+  }).catch(err);
+};
+
+/* ---------------- init + PWA ---------------- */
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; var t = $('.top'); if (t && !$('#instBtn')) t.insertAdjacentHTML('beforeend', '<button id="instBtn" class="btn sm" data-act="install">' + ic('down') + '<span class="hide-m">Pasang</span></button>'); });
+ACT.install = function () { if (!deferredPrompt) return toast('Gunakan menu browser → Tambahkan ke layar utama'); deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; var b = $('#instBtn'); if (b) b.remove(); }); };
+if (!IS_GAS && 'serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      reg.addEventListener('updatefound', function () { var nw = reg.installing; nw && nw.addEventListener('statechange', function () { if (nw.state === 'installed' && navigator.serviceWorker.controller) toast('Versi baru tersedia — muat ulang halaman untuk memperbarui'); }); });
+    }).catch(function (e) { console.warn('SW gagal', e); });
+  });
+}
+window.addEventListener('error', function (e) { if (e && e.message && !/ResizeObserver|Script error/.test(e.message)) console.error('[CineAI]', e.message); });
+boot();
+
+</script>
+</body>
+</html>
