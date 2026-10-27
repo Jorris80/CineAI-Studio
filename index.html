@@ -239,7 +239,7 @@ hr.s{border:0;border-top:1px solid var(--line);margin:14px 0}
 
 .ws-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:12px}.ws-head .ttl{flex:1 1 260px;min-width:0}.ws-head .acts{display:flex;gap:6px;flex-wrap:wrap}
 @media (max-width:640px){.ws-head .acts{width:100%}.ws-head h1{font-size:1.15rem}}
-.player.hasv .p-bot{bottom:44px;background:linear-gradient(transparent,rgba(0,0,0,.6));padding-bottom:6px}.player.hasv .p-side{bottom:150px}
+.player.hasv .p-bot{bottom:58px;background:linear-gradient(transparent,rgba(0,0,0,.6));padding-bottom:6px}.player.hasv .p-side{bottom:170px}
 
 </style>
 </head>
@@ -283,7 +283,7 @@ function genCover(seed, label) {
   return '<svg class="gen-cover" viewBox="0 0 90 160" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g' + h + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(' + h + ',55%,28%)"/><stop offset="1" stop-color="hsl(' + h2 + ',60%,10%)"/></linearGradient></defs><rect width="90" height="160" fill="url(#g' + h + ')"/>' +
     '<circle cx="' + (20 + h % 50) + '" cy="' + (30 + h % 60) + '" r="38" fill="hsl(' + h2 + ',70%,55%)" opacity=".18"/><text x="45" y="78" text-anchor="middle" font-size="34" font-weight="900" fill="rgba(255,255,255,.16)" font-family="system-ui">' + esc(initials(label)) + '</text></svg>';
 }
-function imgOr(url, seed, label) { return url ? '<img loading="lazy" src="' + esc(url) + '" alt="" onerror="this.remove()">' + genCover(seed, label) : genCover(seed, label); }
+function imgOr(url, seed, label) { return url ? genCover(seed, label) + '<img loading="lazy" src="' + esc(url) + '" alt="" onerror="this.remove()">' : genCover(seed, label); }
 function avatarHtml(u, cls) { return '<span class="avatar ' + (cls || '') + '" data-act="zoomImg" data-src="' + esc(u && u.avatarUrl || '') + '">' + (u && u.avatarUrl ? '<img src="' + esc(u.avatarUrl) + '" alt="">' : esc(initials(u && u.name))) + '</span>'; }
 function dl(name, text, mime) { var b = new Blob([text], { type: mime || 'text/plain;charset=utf-8' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
 function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Disalin ✓', 'ok'); }, function () { var x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); toast('Disalin ✓', 'ok'); } catch (e) { } x.remove(); }); }
@@ -408,12 +408,22 @@ function api(action, data, opt) {
     throw e;
   });
 }
-function cacheGet(k) { var all = LS.get('cache', {}); return all[k] ? all[k].d : null; }
+/* Cache baca di memori + disimpan ke localStorage secara tertunda (hindari parse/stringify besar tiap klik) */
+var MEM = null, memT = null;
+function memLoad() { if (!MEM) MEM = LS.get('cache', {}) || {}; return MEM; }
+function cacheGet(k) { var all = memLoad(); return all[k] ? all[k].d : null; }
 function cacheSet(k, d) {
-  var all = LS.get('cache', {}); all[k] = { d: d, t: Date.now() };
-  var keys = Object.keys(all); if (keys.length > 120) keys.sort(function (a, b) { return all[a].t - all[b].t; }).slice(0, keys.length - 120).forEach(function (x) { delete all[x]; });
-  var s = JSON.stringify(all); if (s.length > 3500000) all = {}; LS.set('cache', all);
+  var all = memLoad(); all[k] = { d: d, t: Date.now() };
+  clearTimeout(memT); memT = setTimeout(cachePersist, 800);
 }
+function cachePersist() {
+  var all = memLoad(), keys = Object.keys(all);
+  if (keys.length > 120) keys.sort(function (a, b) { return all[a].t - all[b].t; }).slice(0, keys.length - 120).forEach(function (x) { delete all[x]; });
+  var s = JSON.stringify(all); if (s.length > 3500000) { MEM = {}; all = {}; }
+  LS.set('cache', all);
+}
+window.addEventListener('pagehide', function () { if (MEM) cachePersist(); });
+document.addEventListener('visibilitychange', function () { if (document.hidden && MEM) cachePersist(); });
 function enqueue(req, label) { S.outbox.push({ req: req, label: label || req.action, t: Date.now() }); LS.set('outbox', S.outbox); renderNet(); toast('Disimpan offline — akan dikirim saat online (' + S.outbox.length + ' antrean)'); return { queued: true }; }
 var flushing = false;
 function flushOutbox() {
@@ -541,7 +551,7 @@ function markNav(p) { $$('.nav a[data-h],.bnav a[data-h]').forEach(function (a) 
 function view(html) { var v = $('#view'); if (!v) { renderShell(); v = $('#view'); } v.innerHTML = html; window.scrollTo(0, 0); }
 function skel(n) { var s = ''; for (var i = 0; i < (n || 3); i++) s += '<div class="skel mt"></div>'; view(s); }
 function pageHead(title, sub, actions) { return '<div class="row between mb" style="align-items:flex-end"><div class="grow"><h1>' + title + '</h1>' + (sub ? '<div class="muted small">' + sub + '</div>' : '') + '</div><div class="row">' + (actions || '') + '</div></div>'; }
-ACT.logout = function () { api('auth.logout', {}, { silent: true }).catch(function () { }); S.token = ''; S.user = null; LS.del('token'); boot(); };
+ACT.logout = function () { api('auth.logout', {}, { silent: true }).catch(function () { }); S.token = ''; S.user = null; LS.del('token'); MEM = {}; LS.del('cache'); LS.del('boot'); boot(); };
 
 /* ---------------- grafik SVG ---------------- */
 function barChart(data, h) {
@@ -566,15 +576,57 @@ function ring(pct, label) {
   return '<svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="' + r + '" stroke="var(--card2)" stroke-width="10" fill="none"/><circle cx="50" cy="50" r="' + r + '" stroke="' + col + '" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="' + (c * pct / 100) + ' ' + c + '" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-size="20" font-weight="900" fill="var(--tx)">' + pct + '</text><text x="50" y="70" text-anchor="middle" font-size="8" fill="var(--tx3)">' + esc(label || '') + '</text></svg>';
 }
 
+/* ---------------- baca cepat: tampilkan cache dulu, segarkan di latar (stale-while-revalidate) ---------------- */
+document.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('#view')) S.typed = true; }, true);
+function swrKey(action, data) { data = data || {}; if (!data.deviceId) data.deviceId = DEVICE; return action + ':' + JSON.stringify(data); }
+/**
+ * get(action, data).then(render).catch(fn)
+ * render dipanggil langsung dengan data cache (bila ada), lalu sekali lagi bila data server berbeda.
+ * Tidak menimpa layar bila pengguna sudah pindah halaman atau sedang mengetik.
+ */
+function get(action, data) { return getAll([[action, data]], true); }
+function getAll(reqs, single) {
+  var h = {}, route0 = location.hash, obj = { then: function (f) { h.ok = f; return obj; }, catch: function (f) { h.bad = f; return obj; } };
+  var keys = reqs.map(function (r) { r[1] = r[1] || {}; return swrKey(r[0], r[1]); });
+  var cached = keys.map(cacheGet), haveAll = cached.every(function (c) { return c !== null; });
+  setTimeout(function () {
+    var shown = false;
+    if (haveAll) { shown = true; try { S.typed = false; h.ok && h.ok(single ? cached[0] : cached, true); } catch (e) { console.error(e); } }
+    Promise.all(reqs.map(function (r) { return api(r[0], r[1], { silent: shown }); })).then(function (fresh) {
+      if (location.hash !== route0) return;
+      if (shown && (JSON.stringify(fresh) === JSON.stringify(cached) || S.typed)) return;
+      S.typed = false; h.ok && h.ok(single ? fresh[0] : fresh, false);
+    }, function (e) { if (!shown) { if (h.bad) h.bad(e); else err(e); } });
+  }, 0);
+  return obj;
+}
+/** Muat data halaman yang sering dibuka di latar agar perpindahan menu instan */
+function prefetch() {
+  if (!S.user || !S.online) return;
+  var st = S.user.role !== 'VIEWER';
+  var list = st ? [['dashboard.get'], ['series.list'], ['catalog.list'], ['budget.get']] : [['catalog.list'], ['wallet.get']];
+  if (S.user.role === 'ADMIN') list.push(['settings.get'], ['topup.list']);
+  var i = 0;
+  (function next() { if (i >= list.length) return; var r = list[i++], d = r[1] || {}; if (cacheGet(swrKey(r[0], d))) return next(); api(r[0], d, { silent: true }).catch(function () { }).then(function () { setTimeout(next, 150); }); })();
+}
+
 /* ---------------- boot ---------------- */
+function applyBoot(b) {
+  var prevUser = S.user ? S.user.id + S.user.role : '', prev = JSON.stringify(S.boot);
+  S.boot = b; S.user = b.user; LS.set('boot', b);
+  S.pendingTopups = b.pendingTopups || 0;
+  return { changed: prev !== JSON.stringify(b), userChanged: prevUser !== (b.user ? b.user.id + b.user.role : '') };
+}
 function boot() {
   var th = LS.get('theme', 'dark'); document.documentElement.dataset.theme = th;
   var cached = LS.get('boot', null);
-  if (cached) { S.boot = cached; S.user = cached.user || null; renderShell(); route(); }
+  if (cached) { S.boot = cached; S.user = cached.user || null; S.pendingTopups = cached.pendingTopups || 0; renderShell(); route(); }
   return api('app.boot', {}, { silent: !!cached }).then(function (b) {
-    S.boot = b; S.user = b.user; LS.set('boot', b);
     if (!b.user && S.token) { S.token = ''; LS.del('token'); }
-    renderShell(); route(); refreshBadges();
+    var ch = applyBoot(b);
+    // Hanya gambar ulang bila ada yang berubah — hindari render & fetch ganda
+    if (!cached || ch.changed) { renderShell(); if (!cached || ch.userChanged) route(); else markNav(curPath().split('?')[0]); }
+    setTimeout(prefetch, 600);
   }).catch(function (e) {
     if (!cached) {
       S.boot = { branding: { title: 'CINEAI', highlight: 'STUDIO', subtitle: 'Produksi Drama Vertikal 9:16' }, statusLabel: {}, coinPackages: [] };
@@ -583,9 +635,11 @@ function boot() {
     }
   });
 }
-function refreshBadges() {
+function refreshBadges(n) {
   if (!can('ADMIN')) return;
-  api('topup.list', { status: 'PENDING' }, { silent: true }).then(function (l) { S.pendingTopups = l.length; $$('.nav a[data-h="/money"] .cnt,.bnav a[data-h="/money"] .cnt').forEach(function (e) { e.remove(); }); if (l.length) $$('.nav a[data-h="/money"],.bnav a[data-h="/money"]').forEach(function (a) { a.insertAdjacentHTML('beforeend', '<span class="cnt">' + l.length + '</span>'); }); }).catch(function () { });
+  var paint = function (c) { S.pendingTopups = c; $$('.nav a[data-h="/money"] .cnt,.bnav a[data-h="/money"] .cnt').forEach(function (e) { e.remove(); }); if (c) $$('.nav a[data-h="/money"],.bnav a[data-h="/money"]').forEach(function (a) { a.insertAdjacentHTML('beforeend', '<span class="cnt">' + c + '</span>'); }); };
+  if (typeof n === 'number') return paint(n);
+  api('topup.list', { status: 'PENDING' }, { silent: true }).then(function (l) { paint(l.length); }).catch(function () { });
 }
 
 /* ---------------- Login, daftar, koneksi, dasbor, profil ---------------- */
@@ -604,7 +658,13 @@ on('/login', function () {
   $('#fUp').onsubmit = function (e) { e.preventDefault(); run(api('auth.register', { name: val('rName'), email: val('rEmail'), phone: val('rPhone'), password: val('rPass'), ua: navigator.userAgent })).then(afterLogin).catch(function () { }); };
 });
 ACT.authTab = function (el) { $$('.seg button').forEach(function (b) { b.classList.toggle('on', b === el); }); $('#fIn').classList.toggle('hide', el.dataset.t !== 'in'); $('#fUp').classList.toggle('hide', el.dataset.t !== 'up'); };
-function afterLogin(r) { S.token = r.token; S.user = r.user; LS.set('token', r.token); toast('Selamat datang, ' + r.user.name, 'ok'); boot().then(function () { go(r.user.role === 'VIEWER' ? '#/watch' : '#/dashboard'); }); }
+function afterLogin(r) {
+  S.token = r.token; S.user = r.user; LS.set('token', r.token); MEM = {}; LS.del('cache');
+  if (r.dash) cacheSet(swrKey('dashboard.get', {}), r.dash);
+  if (r.boot) { applyBoot(r.boot); renderShell(); go(r.user.role === 'VIEWER' ? '#/watch' : '#/dashboard'); setTimeout(prefetch, 800); }
+  else boot().then(function () { go(r.user.role === 'VIEWER' ? '#/watch' : '#/dashboard'); });
+  toast('Selamat datang, ' + r.user.name, 'ok');
+}
 
 on('/connect', function () {
   view(pageHead('Koneksi server', 'Mode PWA (GitHub Pages) memanggil Web App Google Apps Script Anda.') +
@@ -618,13 +678,13 @@ ACT.saveApi = function () {
   LS.set('api', u); toast('Menguji koneksi…');
   rawCall({ action: 'app.boot', data: {} }).then(function (r) { if (r.ok) { toast('Terhubung ke ' + r.data.branding.title + ' ✓', 'ok'); LS.del('boot'); boot().then(function () { go('#/'); }); } else toast(r.error.message, 'bad'); }, function (e) { toast(e.message, 'bad'); });
 };
-ACT.clearCache = function () { LS.del('cache'); LS.del('boot'); toast('Cache dibersihkan', 'ok'); };
+ACT.clearCache = function () { MEM = {}; LS.del('cache'); LS.del('boot'); toast('Cache dibersihkan', 'ok'); };
 
 /* ---------------- Dasbor ---------------- */
 on('/dashboard', function () {
   if (S.user.role === 'VIEWER') return go('#/watch');
   skel(4);
-  api('dashboard.get').then(function (d) {
+  get('dashboard.get').then(function (d) {
     var lbl = S.boot.statusLabel || {};
     var st = Object.keys(d.byStatus).map(function (k) { return '<div class="row between small"><span>' + esc(lbl[k] || k) + '</span><b>' + d.byStatus[k] + '</b></div><div class="bar" style="margin:4px 0 8px"><i style="width:' + (d.episodes ? d.byStatus[k] / d.episodes * 100 : 0) + '%"></i></div>'; }).join('');
     var lic = S.boot.tier === 'FREE' || S.boot.tier === 'TRIAL' ? '<div class="note warn mb">Lisensi: <b>' + esc(S.boot.tierLabel) + '</b>. ' + (S.boot.tier === 'FREE' ? 'Fitur AI & monetisasi nonaktif.' : 'Semua fitur Pro aktif selama masa trial.') + (can('ADMIN') ? ' <a href="#/settings?tab=license">Aktivasi lisensi</a>' : '') + '</div>' : '';
@@ -662,7 +722,7 @@ function qp(k) { var m = location.hash.match(new RegExp('[?&]' + k + '=([^&]*)')
 
 on('/series', function () {
   skel(2);
-  api('series.list').then(function (list) {
+  get('series.list').then(function (list) {
     view(pageHead('Serial & Episode', list.length + ' serial di studio Anda', can('ADMIN,CREATOR') ? '<button class="btn pri" data-act="seriesForm">' + ic('plus') + 'Serial baru</button>' : '') +
       (list.length ? '<div class="grid gcards">' + list.map(function (s) {
         return '<a href="#/series/' + s.id + '" class="cover" style="text-decoration:none">' + imgOr(s.coverUrl, s.id, s.title) + '<span class="tagx chip acc">' + esc(GENRES[s.genre] || s.genre) + '</span><div class="ov"><b>' + esc(s.title) + '</b><span class="tiny" style="opacity:.8">' + s.episodeCount + '/' + s.plannedEps + ' ep · ' + s.publishedCount + ' tayang</span></div></a>';
@@ -692,7 +752,7 @@ ACT.seriesSave = function (el) {
 on('/series/:id', function (id) {
   skel(3);
   var tab = qp('tab') || 'eps';
-  Promise.all([api('series.list'), api('episodes.list', { seriesId: id }), api('characters.list', { seriesId: id })]).then(function (r) {
+  getAll([['series.list'], ['episodes.list', { seriesId: id }], ['characters.list', { seriesId: id }]]).then(function (r) {
     var s = r[0].filter(function (x) { return x.id === id; })[0]; if (!s) return view('<div class="empty">Serial tidak ditemukan</div>');
     S.curSeries = s; S.curChars = r[2];
     var eps = r[1], chars = r[2];
@@ -716,7 +776,7 @@ on('/series/:id', function (id) {
         }).join('') : '<div class="card empty">Belum ada karakter</div>') + '</div>';
     } else if (tab === 'pay') {
       body = '<div id="payBox"><div class="skel"></div></div>';
-      api('paywall.get', { seriesId: id }).then(function (p) {
+      get('paywall.get', { seriesId: id }).then(function (p) {
         $('#payBox').innerHTML = '<div class="card col" style="max-width:560px"><label class="check"><input type="checkbox" id="pwOn"' + (p.enabled ? ' checked' : '') + '><span>Aktifkan paywall koin untuk serial ini</span></label>' +
           '<div class="grid g3"><label class="f">Episode gratis (1..n)<input class="i" type="number" id="pwFree" value="' + p.freeCount + '"></label><label class="f">Koin / episode<input class="i" type="number" id="pwCoin" value="' + p.coinsPerEp + '"></label><label class="f">Season pass (koin)<input class="i" type="number" id="pwSeason" value="' + p.seasonPrice + '"></label></div>' +
           '<div class="note">Rekomendasi pasar drama vertikal: 3–10 episode gratis sebagai umpan, harga per episode setara Rp1.500–3.000, season pass ±60% dari total harga per episode.</div><button class="btn pri" data-act="pwSave" data-id="' + id + '">Simpan paywall</button></div>';
@@ -762,7 +822,7 @@ var EP_TABS = [['script', 'book', 'Naskah'], ['board', 'layers', 'Storyboard'], 
 on('/ep/:id', function (id) {
   var tab = qp('tab') || 'script';
   skel(3);
-  api('episode.workspace', { id: id }).then(function (w) {
+  get('episode.workspace', { id: id }).then(function (w) {
     S.ws = w; S.curSeries = w.series; S.curChars = w.characters;
     var e = w.episode, idx = FLOW_ORDER.indexOf(e.status);
     var pipe = '<div class="pipe">' + FLOW_ORDER.map(function (s, i) { return '<div class="st ' + (i < idx ? 'done' : i === idx ? 'cur' : '') + '">' + (i < idx ? '✓ ' : '') + esc(stLabel(s)) + '</div>'; }).join('') + (e.status === 'ARCHIVED' ? '<div class="st cur">Arsip</div>' : '') + '</div>';
@@ -948,7 +1008,7 @@ ACT.frAi = function (el) { el.disabled = true; el.textContent = 'Membuat…'; ru
 
 /* ===== Audio & subtitle ===== */
 TABS.audio = function (w, rebuild) {
-  api('assembly.get', { episodeId: w.episode.id, rebuild: !!rebuild }).then(function (r) {
+  (rebuild ? api('assembly.get', { episodeId: w.episode.id, rebuild: true }) : get('assembly.get', { episodeId: w.episode.id })).then(function (r) {
     S.asm = r;
     var a = r.assembly, g = r.gate, cr = can('ADMIN,CREATOR');
     var gate = ['resolution', 'duration', 'loudness', 'safeArea', 'hook'].map(function (k) {
@@ -1016,7 +1076,7 @@ ACT.bundle = function (el) {
 
 /* ===== Lokalisasi ===== */
 TABS.loc = function (w) {
-  api('dub.list', { episodeId: w.episode.id }).then(function (r) {
+  get('dub.list', { episodeId: w.episode.id }).then(function (r) {
     S.dubs = r.tracks;
     var opts = Object.keys(r.langs).map(function (k) { return '<option value="' + k + '">' + esc(r.langs[k]) + ' (' + k + ')</option>'; }).join('');
     tb('<div class="card col mb" style="max-width:640px"><h3>' + ic('globe') + 'Terjemahkan subtitle</h3><div class="grid g2"><label class="f">Bahasa tujuan<select class="i" id="dbL">' + opts + '</select></label><label class="f">Mesin<select class="i" id="dbE"><option value="LT">Google Translate bawaan (gratis)</option><option value="AI">Gemini (lebih natural, berbayar)</option></select></label></div><button class="btn pri" data-act="dbGo">Terjemahkan</button><div class="tiny dim">Subtitle sumber diambil dari menu Audio & Subtitle. Terjemahan otomatis tetap perlu dicek penutur asli sebelum rilis.</div></div>' +
@@ -1032,12 +1092,12 @@ ACT.dbDl = function (el) {
 
 /* ===== Retensi & hook A/B ===== */
 TABS.growth = function (w) {
-  Promise.all([api('retention.get', { episodeId: w.episode.id }), api('hooks.list', { episodeId: w.episode.id })]).then(function (r) {
+  getAll([['retention.get', { episodeId: w.episode.id }], ['hooks.list', { episodeId: w.episode.id }]]).then(function (r) {
     var rt = r[0], hs = r[1], cr = can('ADMIN,CREATOR'), dur = w.episode.durationSec || 1;
     var chart = lineChart(rt.curve.map(function (c) { return { x: c.pct, y: c.retention, t: c.sec + ' dtk: ' + c.retention + '%' }; }), { marks: rt.sceneMarks.map(function (m) { return { x: Math.min(100, m.sec / dur * 100), label: m.label.split(':')[0] }; }), xl: rt.curve.filter(function (c, i) { return i % 2 === 0; }).map(function (c) { return { x: c.pct, t: secFmt(c.sec) }; }) });
     var rc = { EXCELLENT: 'ok', STRONG: 'info', AT_RISK: 'bad', NO_DATA: '' }[rt.rating];
     tb('<div class="grid g4 keep2 mb"><div class="card kpi"><span class="l">Penonton</span><span class="v">' + rt.viewers + '</span></div><div class="card kpi"><span class="l">Rata-rata tonton</span><span class="v">' + rt.stats.avgWatchPct + '%</span></div><div class="card kpi"><span class="l">Selesai ≥90%</span><span class="v">' + rt.stats.completionPct + '%</span></div><div class="card kpi"><span class="l">Rating</span><span class="v"><span class="chip ' + rc + '" style="font-size:.8rem">' + rt.rating + '</span></span></div></div>' +
-      '<div class="card mb"><div class="row between"><h3 style="margin:0">' + ic('trend') + 'Kurva retensi (data nyata pemutar)</h3>' + (rt.worstDrop && rt.viewers ? '<span class="chip warn">Penurunan terbesar −' + rt.worstDrop.drop + '% @ ' + secFmt(rt.worstDrop.at) + '</span>' : '') + '</div>' + (rt.viewers ? chart : '<div class="empty">Belum ada data tontonan. Kurva terisi otomatis saat episode ditonton di pemutar 9:16.</div>') + '</div>' +
+      '<div class="card mb"><div class="row between"><h3 style="margin:0">' + ic('trend') + 'Kurva retensi (data nyata pemutar)</h3>' + (rt.worstDrop && rt.viewers && rt.worstDrop.drop > 0 ? '<span class="chip warn">Penurunan terbesar −' + rt.worstDrop.drop + '% @ ' + secFmt(rt.worstDrop.at) + '</span>' : '') + '</div>' + (rt.viewers ? chart : '<div class="empty">Belum ada data tontonan. Kurva terisi otomatis saat episode ditonton di pemutar 9:16.</div>') + '</div>' +
       '<div class="card"><div class="row between mb"><h3 style="margin:0">' + ic('spark') + 'A/B test cliffhanger</h3>' + (cr ? '<div class="row"><button class="btn sm" data-act="hkAdd">' + ic('plus') + 'Manual</button><button class="btn sm pri" data-act="hkGen">' + ic('spark') + '3 varian AI</button></div>' : '') + '</div>' +
       '<div class="note mb small">Varian ditampilkan acak sesuai alokasi trafik sebagai kartu cliffhanger di akhir episode. "Lanjut %" = penonton yang menekan Episode berikutnya setelah melihat kartu.</div>' +
       (hs.length ? hs.map(function (h) { return '<div class="li" style="padding-left:0;padding-right:0"><span class="chip ' + (h.winning ? 'ok' : 'acc') + '">' + esc(h.code) + (h.winning ? ' 🏆' : '') + '</span><div class="grow"><div class="small">' + esc(h.text) + '</div><div class="tiny dim">trafik ' + h.traffic + '% · ' + h.views + ' tayang · lanjut ' + h.continuePct + '% · skor ' + h.score + ' · ' + esc(h.model) + '</div></div>' + (cr ? '<div class="row nw"><button class="btn sm" data-act="hkWin" data-id="' + h.id + '">Pemenang</button><button class="btn sm icon ghost bad" data-act="hkDel" data-id="' + h.id + '">' + ic('trash') + '</button></div>' : '') + '</div>'; }).join('') : '<div class="empty">Belum ada varian</div>') + '</div>');
@@ -1051,7 +1111,7 @@ ACT.hkDel = function (el) { run(api('hooks.save', { episodeId: S.ws.episode.id, 
 
 /* ===== Sindikasi ===== */
 TABS.synd = function (w) {
-  api('syndication.list', { episodeId: w.episode.id }).then(function (r) {
+  get('syndication.list', { episodeId: w.episode.id }).then(function (r) {
     tb('<div class="card col mb" style="max-width:640px"><h3>' + ic('share') + 'Buat paket ekspor</h3><label class="f">Tujuan<select class="i" id="syP">' + Object.keys(r.presets).map(function (k) { return '<option value="' + k + '">' + esc(r.presets[k].name) + '</option>'; }).join('') + '</select></label><button class="btn pri" data-act="syGo">Buat paket</button>' +
       '<div class="tiny dim">Nama platform hanya sebagai referensi spesifikasi teknis; CineAI tidak berafiliasi dengan platform mana pun. Unggah dilakukan manual melalui akun resmi Anda.</div></div>' +
       (r.packages.map(function (p) { return '<div class="card mb"><div class="row between"><b>' + esc(p.preset.spec.name) + '</b><span class="chip ' + (p.status === 'READY' ? 'ok' : 'warn') + '">' + p.status + '</span></div><div class="row small mt">' + p.preset.checks.map(function (c) { return '<span class="chip ' + (c.ok ? 'ok' : 'bad') + '">' + (c.ok ? '✓ ' : '✗ ') + esc(c.item) + '</span>'; }).join('') + '</div><div class="small muted mt">' + esc(p.preset.spec.note) + '</div><div class="code mt">' + esc(p.preset.ffmpeg) + '</div><div class="row mt"><button class="btn sm" data-act="copy" data-text="' + esc(p.preset.ffmpeg) + '">Salin perintah ffmpeg</button><button class="btn sm" data-act="copy" data-text="' + esc(p.preset.caption) + '">Salin caption</button><span class="tiny dim">' + fmtDate(p.createdAt, 1) + '</span></div></div>'; }).join('') || '<div class="card empty">Belum ada paket</div>'));
@@ -1062,7 +1122,7 @@ ACT.syGo = function () { run(api('syndication.create', { episodeId: S.ws.episode
 /* ---------------- Penonton: katalog, pemutar 9:16, dompet ---------------- */
 on('/watch', function () {
   skel(2);
-  api('catalog.list', {}).then(function (cat) {
+  get('catalog.list', {}).then(function (cat) {
     S.catalog = cat;
     var hist = LS.get('hist', {}), recent = Object.keys(hist).map(function (k) { return hist[k]; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 8);
     var genres = {}; cat.forEach(function (s) { genres[s.genre] = 1; });
@@ -1091,8 +1151,7 @@ on('/watch/:sid', function (sid) {
       (s.paywall.enabled ? '<div class="note mb small">EP 1–' + s.paywall.freeCount + ' gratis · episode berikutnya ' + s.paywall.coinsPerEp + ' koin</div>' : '') +
       '<div class="card pad0"><div class="list">' + s.episodes.map(function (e) { return '<a class="li click" href="#/w/' + e.id + '" style="text-decoration:none;color:inherit"><span class="cover" style="width:48px;flex:0 0 48px;border-radius:8px">' + imgOr(e.thumbUrl, e.id, 'EP' + e.number) + '</span><div class="grow" style="min-width:0"><b>EP ' + e.number + ' · ' + esc(e.title) + '</b><div class="tiny dim trunc">' + esc(e.hook) + '</div><div class="tiny dim">' + secFmt(e.durationSec) + ' · ' + fmtN(e.stats.views) + ' tayang · ♥ ' + fmtN(e.stats.likes) + '</div></div>' + (e.unlocked ? (e.free ? '<span class="chip ok">Gratis</span>' : '<span class="chip ok">Terbuka</span>') : '<span class="chip warn">🔒 ' + s.paywall.coinsPerEp + '</span>') + '</a>'; }).join('') + '</div></div>');
   };
-  if (S.catalog) go2(S.catalog);
-  api('catalog.list', {}).then(function (c) { S.catalog = c; go2(c); }).catch(err);
+  get('catalog.list', {}).then(function (c) { S.catalog = c; go2(c); }).catch(err);
 });
 
 ACT.buySeason = function (el) {
@@ -1192,7 +1251,7 @@ ACT.unlockEp = function () {
 /* ---------------- Dompet ---------------- */
 on('/wallet', function () {
   skel(2);
-  api('wallet.get').then(function (w) {
+  get('wallet.get').then(function (w) {
     S.wallet = w; S.pkSel = w.packages[0] && w.packages[0].id;
     var pay = w.payment || {};
     view(pageHead('Dompet koin', 'Koin dipakai untuk membuka episode & season pass') +
@@ -1215,7 +1274,7 @@ ACT.tpGo = function () { run(api('topup.request', { packageId: S.pkSel, method: 
 on('/money', function () {
   if (!can('ADMIN')) return go('#/');
   skel(3);
-  Promise.all([api('topup.list', {}), api('royalty.get', {})]).then(function (r) {
+  getAll([['topup.list', {}], ['royalty.get', {}]]).then(function (r) {
     var tps = r[0], roy = r[1], pend = tps.filter(function (t) { return t.status === 'PENDING'; });
     S.pendingTopups = pend.length;
     var tot = roy.reduce(function (a, x) { a.g += x.grossIdr; a.n += x.netIdr; a.c += x.coins; return a; }, { g: 0, n: 0, c: 0 });
@@ -1238,7 +1297,7 @@ ACT.tpRev = function (el) {
 
 on('/budget', function () {
   skel(2);
-  api('budget.get').then(function (b) {
+  get('budget.get').then(function (b) {
     var ad = can('ADMIN'), pct = b.dailyCapUsd ? Math.min(100, b.spentTodayUsd / b.dailyCapUsd * 100) : 0;
     view(pageHead('Anggaran AI', 'Pre-flight check: setiap panggilan AI diperiksa terhadap batas harian & per episode') +
       (!b.aiEnabled ? '<div class="note warn mb">AI tidak aktif pada lisensi saat ini.</div>' : '') +
@@ -1259,7 +1318,7 @@ ACT.bgClr = function () { confirmBox('Hapus API key Gemini?').then(function (y) 
 on('/audit', function () {
   skel(2);
   var q = qp('q');
-  api('audit.list', { q: q, limit: 300 }).then(function (list) {
+  get('audit.list', { q: q, limit: 300 }).then(function (list) {
     view(pageHead('Jejak audit', 'Catatan tidak dapat diubah dari aplikasi — setiap perubahan status, persetujuan, dan transaksi tercatat') +
       '<div class="row mb"><input class="i grow" id="auQ" placeholder="Cari aksi, email, ID…" value="' + esc(q) + '" style="max-width:420px"><button class="btn" data-act="auGo">Cari</button><button class="btn" data-act="auCsv">' + ic('down') + 'CSV</button></div>' +
       '<div class="card pad0"><div class="tbl"><table class="t resp"><thead><tr><th>Waktu</th><th>Aksi</th><th>Pelaku</th><th>Target</th><th>Detail</th></tr></thead><tbody>' + list.map(function (a) { return '<tr><td data-l="Waktu" class="tiny">' + fmtDate(a.createdAt, 1) + '</td><td data-l="Aksi"><span class="chip">' + esc(a.action) + '</span></td><td data-l="Pelaku" class="small">' + esc(a.email) + '</td><td data-l="Target" class="tiny mono">' + esc(a.resource) + ' ' + esc(a.targetId) + '</td><td data-l="Detail" class="tiny dim" style="max-width:320px;word-break:break-word">' + esc(JSON.stringify(a.details || {})) + '</td></tr>'; }).join('') + '</tbody></table></div>' + (list.length ? '' : '<div class="empty">Kosong</div>') + '</div>');
@@ -1276,7 +1335,7 @@ on('/settings', function () {
   if (!can('ADMIN')) return go('#/');
   var tab = qp('tab') || 'brand';
   skel(2);
-  api('settings.get').then(function (st) {
+  get('settings.get').then(function (st) {
     S.set = st;
     var head = pageHead('Pengaturan', esc(st.org && st.org.name)) + '<div class="tabs">' + SET_TABS.map(function (t) { return '<a href="#/settings?tab=' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</a>'; }).join('') + '</div>';
     view(head + '<div id="setBody"></div>');
@@ -1301,7 +1360,7 @@ ACT.logoClr = function () { $('#bL').value = ''; $('#bZ').dispatchEvent(new Even
 ACT.brandSave = function () { run(api('settings.save', { orgName: val('stOrg'), branding: { title: val('bT'), highlight: val('bH'), subtitle: val('bS'), badge: val('bB'), accent: val('bA'), logoUrl: val('bL'), logoZoom: Number(val('bZ')) } }, { noQueue: true }), 'Branding disimpan').then(function () { LS.del('boot'); boot(); }); };
 
 SETV.users = function () {
-  api('users.list').then(function (us) {
+  get('users.list').then(function (us) {
     S.users = us;
     sb('<div class="row end mb"><button class="btn pri" data-act="userForm">' + ic('plus') + 'Pengguna</button></div><div class="card pad0"><div class="list">' + us.map(function (u) { return '<div class="li">' + avatarHtml(u) + '<div class="grow" style="min-width:0"><b>' + esc(u.name) + '</b> ' + (u.active ? '' : '<span class="chip bad">nonaktif</span>') + '<div class="tiny dim trunc">' + esc(u.email) + (u.phone ? ' · ' + esc(u.phone) : '') + ' · login ' + (u.lastLogin ? ago(u.lastLogin) : 'belum') + '</div></div><span class="chip ' + (u.role === 'ADMIN' ? 'acc' : u.role === 'VIEWER' ? '' : 'info') + '">' + u.role + '</span><button class="btn sm icon" data-act="userForm" data-id="' + u.id + '">' + ic('edit') + '</button></div>'; }).join('') + '</div></div>' +
       '<div class="note mt small"><b>Peran:</b> ADMIN — semua akses · CREATOR — serial, naskah, storyboard, assembly · REVIEWER — setujui naskah/frame, QC & sign-off · VIEWER — penonton (daftar sendiri).</div>');
